@@ -29,6 +29,9 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
   String? _selectedSize;
   int _quantity = 1;
 
+  // ✅ مؤشر الصور
+  int _currentImage = 0;
+
   @override
   void initState() {
     super.initState();
@@ -71,8 +74,8 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
     }
 
     final message =
-        "مرحبا، أريد شراء المنتج:\n"
-        "${widget.product.name}\n\n"
+        "مرحبا، أريد شراء المنتج:\n\n"
+        "${widget.product.name}\n"
         "المقاس: $_selectedSize\n"
         "الكمية: $_quantity\n"
         "السعر: ${widget.product.price} ريال يمني";
@@ -125,6 +128,31 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
   }
 
   // =====================================================
+  // ✅ فتح الصورة FullScreen مع Zoom
+  // =====================================================
+  void _openImageViewer(String imageUrl) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => Scaffold(
+          backgroundColor: Colors.black,
+          appBar: AppBar(
+            backgroundColor: Colors.black,
+            iconTheme: const IconThemeData(color: Colors.white),
+          ),
+          body: Center(
+            child: InteractiveViewer(
+              minScale: 1,
+              maxScale: 5,
+              child: Image.network(imageUrl),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // =====================================================
   // UI
   // =====================================================
   @override
@@ -136,28 +164,93 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
         title: Text(p.name),
         centerTitle: true,
       ),
+
       body: ListView(
         children: [
-          // ================= الصور =================
+          // ================== صور المنتج الاحترافية ==================
           SizedBox(
-            height: 280,
+            height: 330,
             child: FutureBuilder<List<ProductImage>>(
               future: _imagesFuture,
               builder: (context, snapshot) {
-                final images = [
+                final extraImages =
+                    snapshot.hasData ? snapshot.data! : [];
+
+                // ✅ جميع الصور
+                final allImages = [
                   p.imageUrl,
-                  if (snapshot.hasData)
-                    ...snapshot.data!.map((e) => e.imageUrl),
+                  ...extraImages.map((e) => e.imageUrl),
                 ];
 
-                return PageView.builder(
-                  itemCount: images.length,
-                  itemBuilder: (_, i) => Image.network(
-                    images[i],
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) =>
-                        const Icon(Icons.image, size: 80),
-                  ),
+                return Stack(
+                  alignment: Alignment.bottomCenter,
+                  children: [
+                    // ✅ سحب الصور
+                    PageView.builder(
+                      itemCount: allImages.length,
+                      onPageChanged: (index) {
+                        setState(() {
+                          _currentImage = index;
+                        });
+                      },
+                      itemBuilder: (_, i) {
+                        return GestureDetector(
+                          onTap: () => _openImageViewer(allImages[i]),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(18),
+                            child: Image.network(
+                              allImages[i],
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) =>
+                                  const Icon(Icons.image, size: 80),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+
+                    // ✅ الأسهم يمين ويسار
+                    Positioned(
+                      left: 10,
+                      child: IconButton(
+                        icon: const Icon(Icons.arrow_back_ios,
+                            color: Colors.white),
+                        onPressed: () {},
+                      ),
+                    ),
+
+                    Positioned(
+                      right: 10,
+                      child: IconButton(
+                        icon: const Icon(Icons.arrow_forward_ios,
+                            color: Colors.white),
+                        onPressed: () {},
+                      ),
+                    ),
+
+                    // ✅ نقاط المؤشر
+                    Positioned(
+                      bottom: 12,
+                      child: Row(
+                        children: List.generate(
+                          allImages.length,
+                          (index) => AnimatedContainer(
+                            duration: const Duration(milliseconds: 250),
+                            margin: const EdgeInsets.symmetric(horizontal: 4),
+                            width: _currentImage == index ? 14 : 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              color: _currentImage == index
+                                  ? Colors.greenAccent
+                                  : Colors.white54,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 );
               },
             ),
@@ -177,13 +270,17 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
+
                 const SizedBox(height: 10),
+
                 Text(
                   p.description,
                   textAlign: TextAlign.center,
                   style: const TextStyle(color: Colors.grey),
                 ),
+
                 const SizedBox(height: 15),
+
                 Text(
                   "${p.price} ريال يمني",
                   style: const TextStyle(
@@ -195,8 +292,6 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
               ],
             ),
           ),
-
-          const SizedBox(height: 15),
 
           // ================= المقاسات =================
           const Padding(
@@ -224,7 +319,8 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                     title: Text("المقاس: ${v.size}"),
                     subtitle: Text("المتوفر: ${v.quantity}"),
                     trailing: selected
-                        ? const Icon(Icons.check_circle, color: Colors.green)
+                        ? const Icon(Icons.check_circle,
+                            color: Colors.green)
                         : null,
                     onTap: () {
                       setState(() {
@@ -254,7 +350,9 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                 Text(
                   "$_quantity",
                   style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold),
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 IconButton(
                   icon: const Icon(Icons.add),
@@ -278,13 +376,17 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
               label: const Text("إضافة إلى السلة"),
               onPressed: _addToCart,
             ),
+
             const SizedBox(height: 10),
+
             ElevatedButton.icon(
               icon: const Icon(Icons.shopping_cart_checkout),
               label: const Text("طلب داخل التطبيق"),
               onPressed: _sendOrder,
             ),
+
             const SizedBox(height: 10),
+
             OutlinedButton.icon(
               icon: const Icon(Icons.chat),
               label: const Text("شراء عبر واتساب"),
