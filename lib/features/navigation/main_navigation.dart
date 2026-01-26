@@ -3,27 +3,46 @@ import 'package:flutter/material.dart';
 import 'package:tactical_military_store/features/navigation/user_shell.dart';
 import 'package:tactical_military_store/features/navigation/super_admin_shell.dart';
 
+/// ✅ MainNavigation (Amazon Style)
+/// --------------------------------
+/// - المتجر مفتوح للجميع
+/// - السلة/الطلبات/الحساب تحتاج Login
+/// - Admin له لوحة تحكم
 class MainNavigation extends StatelessWidget {
   final String role;
+
+  /// ✅ هل المستخدم مسجل دخول؟
+  final bool isLoggedIn;
+
+  /// ✅ ماذا نفعل إذا حاول دخول صفحة محمية؟
+  final VoidCallback onLoginRequired;
 
   const MainNavigation({
     super.key,
     required this.role,
+    required this.isLoggedIn,
+    required this.onLoginRequired,
   });
 
   @override
   Widget build(BuildContext context) {
-    // 👑 سوبر أدمن
+    // 👑 Super Admin
     if (role == "super_admin") {
       return const SuperAdminShell();
     }
 
-    // 🛡 أدمن
+    // 🛡 Admin
     if (role == "admin") {
-      return const UserShell();
+      return UserShell(
+        isLoggedIn: isLoggedIn,
+        onLoginRequired: onLoginRequired,
+      );
     }
 
-    // 👤 مستخدم عادي
-    return const UserShell();
+    // 👤 User أو Guest
+    return UserShell(
+      isLoggedIn: isLoggedIn,
+      onLoginRequired: onLoginRequired,
+    );
   }
 }

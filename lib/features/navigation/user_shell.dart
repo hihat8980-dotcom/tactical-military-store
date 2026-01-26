@@ -12,8 +12,20 @@ import 'package:tactical_military_store/features/cart/cart_page.dart';
 
 import 'package:tactical_military_store/core/theme/military_theme.dart';
 
+/// ✅ UserShell (Amazon Style)
+/// --------------------------------
+/// ✅ المتجر مفتوح للجميع
+/// ✅ السلة مفتوحة للجميع
+/// ❌ الطلبات والحساب تحتاج تسجيل دخول
 class UserShell extends StatefulWidget {
-  const UserShell({super.key});
+  final bool isLoggedIn;
+  final VoidCallback onLoginRequired;
+
+  const UserShell({
+    super.key,
+    required this.isLoggedIn,
+    required this.onLoginRequired,
+  });
 
   @override
   State<UserShell> createState() => _UserShellState();
@@ -23,14 +35,14 @@ class _UserShellState extends State<UserShell> {
   int _index = 0;
 
   // =====================================================
-  // ✅ Pages (Store + Cart + Profile + Orders + Settings)
+  // ✅ Pages
   // =====================================================
   late final List<Widget> _pages = [
-    const HomePage(),
-    const CartPage(),
-    const ProfilePage(),
-    const UserOrdersPage(),
-    const SettingsPage(),
+    const HomePage(),        // 0 متجر
+    const CartPage(),        // 1 سلة (مفتوحة للجميع)
+    const UserOrdersPage(),  // 2 طلباتي (Login Required)
+    const ProfilePage(),     // 3 حسابي (Login Required)
+    const SettingsPage(),    // 4 إعدادات (Login Required)
   ];
 
   // =====================================================
@@ -49,6 +61,21 @@ class _UserShellState extends State<UserShell> {
   }
 
   // =====================================================
+  // ✅ Navigation Logic
+  // =====================================================
+  void _onTabTapped(int value) {
+    /// الصفحات التي تحتاج تسجيل دخول:
+    /// الطلبات + الحساب + الإعدادات
+    if ((value == 2 || value == 3 || value == 4) &&
+        !widget.isLoggedIn) {
+      widget.onLoginRequired();
+      return;
+    }
+
+    setState(() => _index = value);
+  }
+
+  // =====================================================
   // ✅ UI
   // =====================================================
   @override
@@ -56,24 +83,27 @@ class _UserShellState extends State<UserShell> {
     return Scaffold(
       backgroundColor: MilitaryTheme.sand,
 
-      // ✅ AppBar سكري رسمي
+      // ================= AppBar =================
       appBar: AppBar(
         title: const Text("🛡 Tactical Store"),
+
         actions: [
-          IconButton(
-            icon: const Icon(Icons.logout, color: Colors.redAccent),
-            onPressed: _logout,
-          )
+          // ✅ Logout يظهر فقط لو مسجل دخول
+          if (widget.isLoggedIn)
+            IconButton(
+              icon: const Icon(Icons.logout, color: Colors.redAccent),
+              onPressed: _logout,
+            ),
         ],
       ),
 
-      // ✅ Body
+      // ================= Body =================
       body: _pages[_index],
 
-      // ✅ Bottom Navigation مثل Amazon
+      // ================= Bottom Nav =================
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _index,
-        onTap: (value) => setState(() => _index = value),
+        onTap: _onTabTapped,
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.storefront),
@@ -84,12 +114,12 @@ class _UserShellState extends State<UserShell> {
             label: "السلة",
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: "حسابي",
-          ),
-          BottomNavigationBarItem(
             icon: Icon(Icons.shopping_bag),
             label: "طلباتي",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: "حسابي",
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings),

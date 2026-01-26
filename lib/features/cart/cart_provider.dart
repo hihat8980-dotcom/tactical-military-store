@@ -1,67 +1,99 @@
 import 'package:flutter/material.dart';
+import 'package:tactical_military_store/models/product.dart';
 
+/// عنصر داخل السلة
+class CartItem {
+  final Product product;
+  final String size;
+  int quantity;
+
+  CartItem({
+    required this.product,
+    required this.size,
+    required this.quantity,
+  });
+
+  double get totalPrice => product.price * quantity;
+}
+
+/// Provider للسلة
 class CartProvider extends ChangeNotifier {
-  final List<Map<String, dynamic>> _items = [];
+  final List<CartItem> _items = [];
 
-  // ===============================
-  // Getter
-  // ===============================
-  List<Map<String, dynamic>> get items => _items;
+  /// عرض المنتجات داخل السلة
+  List<CartItem> get items => _items;
 
-  // ===============================
-  // Total Items Count
-  // ===============================
-  int get totalItems {
-    int count = 0;
-    for (var item in _items) {
-      count += item['quantity'] as int;
-    }
-    return count;
-  }
+  /// عدد العناصر
+  int get itemsCount => _items.length;
 
-  // ===============================
-  // Total Price
-  // ===============================
-  double get totalPrice {
+  /// السعر الإجمالي
+  double get totalAmount {
     double total = 0;
     for (var item in _items) {
-      total += (item['price'] * item['quantity']);
+      total += item.totalPrice;
     }
     return total;
   }
 
-  // ===============================
-  // Add Product
-  // ===============================
-  void addToCart(Map<String, dynamic> product) {
-    final index = _items.indexWhere((p) => p['id'] == product['id']);
+  // =====================================================
+  // ✅ إضافة منتج إلى السلة
+  // =====================================================
+  void addToCart({
+    required Product product,
+    required String size,
+    required int quantity,
+  }) {
+    // إذا المنتج موجود مسبقاً بنفس المقاس → نزيد الكمية
+    final index = _items.indexWhere(
+      (item) => item.product.id == product.id && item.size == size,
+    );
 
     if (index != -1) {
-      _items[index]['quantity'] += 1;
+      _items[index].quantity += quantity;
     } else {
-      _items.add({
-        "id": product['id'],
-        "name": product['name'],
-        "price": product['price'],
-        "image": product['image'],
-        "quantity": 1,
-      });
+      _items.add(
+        CartItem(
+          product: product,
+          size: size,
+          quantity: quantity,
+        ),
+      );
     }
 
     notifyListeners();
   }
 
-  // ===============================
-  // Remove Product
-  // ===============================
-  void removeFromCart(int productId) {
-    _items.removeWhere((item) => item['id'] == productId);
+  // =====================================================
+  // ✅ حذف منتج من السلة
+  // =====================================================
+  void removeItem(CartItem item) {
+    _items.remove(item);
     notifyListeners();
   }
 
-  // ===============================
-  // Clear Cart
-  // ===============================
+  // =====================================================
+  // ✅ زيادة الكمية
+  // =====================================================
+  void increaseQuantity(CartItem item) {
+    item.quantity++;
+    notifyListeners();
+  }
+
+  // =====================================================
+  // ✅ تقليل الكمية
+  // =====================================================
+  void decreaseQuantity(CartItem item) {
+    if (item.quantity > 1) {
+      item.quantity--;
+    } else {
+      _items.remove(item);
+    }
+    notifyListeners();
+  }
+
+  // =====================================================
+  // ✅ تفريغ السلة
+  // =====================================================
   void clearCart() {
     _items.clear();
     notifyListeners();

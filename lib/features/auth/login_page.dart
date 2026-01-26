@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:tactical_military_store/core/services/supabase_service.dart';
 import 'package:tactical_military_store/core/services/token_service.dart';
 
-import 'package:tactical_military_store/features/navigation/main_navigation.dart';
+import 'package:tactical_military_store/features/navigation/app_shell.dart';
 import 'package:tactical_military_store/features/auth/register_page.dart';
 
 class LoginPage extends StatefulWidget {
@@ -45,11 +45,14 @@ class _LoginPageState extends State<LoginPage> {
 
       if (!mounted) return;
 
-      // ✅ الانتقال حسب Role
+      // ✅ الانتقال بعد تسجيل الدخول → AppShell
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) => MainNavigation(role: result.role),
+          builder: (_) => AppShell(
+            role: result.role,
+            isLoggedIn: true,
+          ),
         ),
       );
     } catch (e) {

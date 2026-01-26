@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 
-import 'package:tactical_military_store/features/auth/login_page.dart';
 import 'package:tactical_military_store/features/navigation/app_shell.dart';
 import 'package:tactical_military_store/core/services/token_service.dart';
 import 'package:tactical_military_store/core/services/supabase_service.dart';
@@ -18,12 +17,14 @@ class _SplashPageState extends State<SplashPage>
   late AnimationController _controller;
   late Animation<double> _fade;
   late Animation<double> _scale;
+
   String _image = 'assets/logo1.jpg';
 
   @override
   void initState() {
     super.initState();
 
+    // ✅ Animation Controller
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1400),
@@ -43,6 +44,7 @@ class _SplashPageState extends State<SplashPage>
 
     _controller.forward();
 
+    // ✅ تغيير الصورة بعد ثانيتين
     Timer(const Duration(seconds: 2), () {
       if (!mounted) return;
       setState(() {
@@ -50,36 +52,49 @@ class _SplashPageState extends State<SplashPage>
       });
     });
 
-    Timer(const Duration(seconds: 4), _checkAuth);
+    // ✅ الانتقال بعد 4 ثواني
+    Timer(const Duration(seconds: 4), _goNext);
   }
 
-  Future<void> _checkAuth() async {
+  // =====================================================
+  // ✅ دخول المتجر بدون تسجيل دخول
+  // =====================================================
+  Future<void> _goNext() async {
     final token = await TokenService().getToken();
 
     if (!mounted) return;
 
-    // ❌ لا يوجد تسجيل دخول
+    // =====================================================
+    // ✅ Guest Mode (بدون حساب)
+    // =====================================================
     if (token == null) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) => const LoginPage(),
+          builder: (_) => const AppShell(
+            role: "guest",
+            isLoggedIn: false,
+          ),
         ),
       );
       return;
     }
 
-    // ✅ يوجد token → نقرأ الدور الحقيقي من Supabase
+    // =====================================================
+    // ✅ Logged In User Mode
+    // =====================================================
     final user = SupabaseService().currentUser;
 
     final String role =
-        user?.appMetadata['role'] as String? ?? 'user';
+        user?.appMetadata['role'] as String? ?? "user";
 
-    // ✅ التعديل المهم: نذهب إلى AppShell (Navigator حقيقي)
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (_) => AppShell(role: role),
+        builder: (_) => AppShell(
+          role: role,
+          isLoggedIn: true,
+        ),
       ),
     );
   }
@@ -90,6 +105,9 @@ class _SplashPageState extends State<SplashPage>
     super.dispose();
   }
 
+  // =====================================================
+  // ✅ UI Splash Screen
+  // =====================================================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -112,10 +130,14 @@ class _SplashPageState extends State<SplashPage>
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  // ✅ Logo Animation
                   Image.asset(_image, width: 200, height: 200),
+
                   const SizedBox(height: 28),
+
+                  // ✅ Title
                   const Text(
-                    'TACTICAL MILITARY STORE',
+                    "TACTICAL MILITARY STORE",
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
@@ -123,9 +145,12 @@ class _SplashPageState extends State<SplashPage>
                       color: Color(0xFFE6E6E6),
                     ),
                   ),
+
                   const SizedBox(height: 10),
+
+                  // ✅ Subtitle
                   const Text(
-                    'Prepared for the mission',
+                    "Prepared for the mission",
                     style: TextStyle(
                       fontSize: 14,
                       letterSpacing: 1.2,
