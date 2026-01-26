@@ -24,7 +24,6 @@ class _SplashPageState extends State<SplashPage>
   void initState() {
     super.initState();
 
-    // ✅ Animation Controller
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1400),
@@ -44,7 +43,6 @@ class _SplashPageState extends State<SplashPage>
 
     _controller.forward();
 
-    // ✅ تغيير الصورة بعد ثانيتين
     Timer(const Duration(seconds: 2), () {
       if (!mounted) return;
       setState(() {
@@ -52,21 +50,18 @@ class _SplashPageState extends State<SplashPage>
       });
     });
 
-    // ✅ الانتقال بعد 4 ثواني
     Timer(const Duration(seconds: 4), _goNext);
   }
 
   // =====================================================
-  // ✅ دخول المتجر بدون تسجيل دخول
+  // ✅ دخول المتجر للجميع
   // =====================================================
   Future<void> _goNext() async {
     final token = await TokenService().getToken();
 
     if (!mounted) return;
 
-    // =====================================================
-    // ✅ Guest Mode (بدون حساب)
-    // =====================================================
+    // ✅ Guest دخول بدون تسجيل
     if (token == null) {
       Navigator.pushReplacement(
         context,
@@ -80,13 +75,9 @@ class _SplashPageState extends State<SplashPage>
       return;
     }
 
-    // =====================================================
-    // ✅ Logged In User Mode
-    // =====================================================
+    // ✅ Logged In User
     final user = SupabaseService().currentUser;
-
-    final String role =
-        user?.appMetadata['role'] as String? ?? "user";
+    final String role = user?.appMetadata['role'] as String? ?? "user";
 
     Navigator.pushReplacement(
       context,
@@ -106,7 +97,7 @@ class _SplashPageState extends State<SplashPage>
   }
 
   // =====================================================
-  // ✅ UI Splash Screen
+  // ✅ UI
   // =====================================================
   @override
   Widget build(BuildContext context) {
@@ -130,12 +121,8 @@ class _SplashPageState extends State<SplashPage>
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // ✅ Logo Animation
                   Image.asset(_image, width: 200, height: 200),
-
                   const SizedBox(height: 28),
-
-                  // ✅ Title
                   const Text(
                     "TACTICAL MILITARY STORE",
                     style: TextStyle(
@@ -145,10 +132,7 @@ class _SplashPageState extends State<SplashPage>
                       color: Color(0xFFE6E6E6),
                     ),
                   ),
-
                   const SizedBox(height: 10),
-
-                  // ✅ Subtitle
                   const Text(
                     "Prepared for the mission",
                     style: TextStyle(
