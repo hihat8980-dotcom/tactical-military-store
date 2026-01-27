@@ -50,8 +50,7 @@ class _LoginPageState extends State<LoginPage> {
         context,
         MaterialPageRoute(
           builder: (_) => AppShell(
-            role: result.role,
-            isLoggedIn: true,
+            role: result.role, // ✅ فقط role
           ),
         ),
       );
@@ -144,7 +143,6 @@ class _LoginPageState extends State<LoginPage> {
 
                     const SizedBox(height: 18),
 
-                    // Title
                     const Text(
                       "تسجيل الدخول",
                       style: TextStyle(
@@ -168,7 +166,6 @@ class _LoginPageState extends State<LoginPage> {
 
                     const SizedBox(height: 28),
 
-                    // Email
                     TextFormField(
                       controller: _emailController,
                       style: const TextStyle(color: Colors.white),
@@ -182,7 +179,6 @@ class _LoginPageState extends State<LoginPage> {
 
                     const SizedBox(height: 16),
 
-                    // Password
                     TextFormField(
                       controller: _passwordController,
                       obscureText: true,
@@ -197,7 +193,6 @@ class _LoginPageState extends State<LoginPage> {
 
                     const SizedBox(height: 18),
 
-                    // Error Box
                     if (_error != null)
                       Container(
                         padding: const EdgeInsets.all(12),
@@ -227,7 +222,6 @@ class _LoginPageState extends State<LoginPage> {
 
                     const SizedBox(height: 18),
 
-                    // Button
                     SizedBox(
                       width: double.infinity,
                       height: 55,
@@ -256,7 +250,6 @@ class _LoginPageState extends State<LoginPage> {
 
                     const SizedBox(height: 22),
 
-                    // Register Link
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [

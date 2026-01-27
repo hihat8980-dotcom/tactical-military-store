@@ -24,6 +24,7 @@ class _SplashPageState extends State<SplashPage>
   void initState() {
     super.initState();
 
+    // ================= Animation =================
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1400),
@@ -43,6 +44,7 @@ class _SplashPageState extends State<SplashPage>
 
     _controller.forward();
 
+    // تغيير الصورة (اختياري)
     Timer(const Duration(seconds: 2), () {
       if (!mounted) return;
       setState(() {
@@ -50,42 +52,37 @@ class _SplashPageState extends State<SplashPage>
       });
     });
 
+    // الانتقال
     Timer(const Duration(seconds: 4), _goNext);
   }
 
   // =====================================================
-  // ✅ دخول المتجر للجميع
+  // 🚀 دخول المتجر (بدون تسجيل إجباري)
   // =====================================================
   Future<void> _goNext() async {
     final token = await TokenService().getToken();
 
     if (!mounted) return;
 
-    // ✅ Guest دخول بدون تسجيل
+    // 👤 Guest
     if (token == null) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) => const AppShell(
-            role: "guest",
-            isLoggedIn: false,
-          ),
+          builder: (_) => const AppShell(role: "guest"),
         ),
       );
       return;
     }
 
-    // ✅ Logged In User
+    // 👑 User / Admin / Super Admin
     final user = SupabaseService().currentUser;
-    final String role = user?.appMetadata['role'] as String? ?? "user";
+    final role = user?.appMetadata['role'] as String? ?? "user";
 
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (_) => AppShell(
-          role: role,
-          isLoggedIn: true,
-        ),
+        builder: (_) => AppShell(role: role),
       ),
     );
   }
@@ -97,7 +94,7 @@ class _SplashPageState extends State<SplashPage>
   }
 
   // =====================================================
-  // ✅ UI
+  // 🎨 UI
   // =====================================================
   @override
   Widget build(BuildContext context) {
@@ -121,8 +118,16 @@ class _SplashPageState extends State<SplashPage>
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Image.asset(_image, width: 200, height: 200),
+                  // 🛡 Logo
+                  Image.asset(
+                    _image,
+                    width: 200,
+                    height: 200,
+                  ),
+
                   const SizedBox(height: 28),
+
+                  // Title
                   const Text(
                     "TACTICAL MILITARY STORE",
                     style: TextStyle(
@@ -132,7 +137,10 @@ class _SplashPageState extends State<SplashPage>
                       color: Color(0xFFE6E6E6),
                     ),
                   ),
+
                   const SizedBox(height: 10),
+
+                  // Subtitle
                   const Text(
                     "Prepared for the mission",
                     style: TextStyle(

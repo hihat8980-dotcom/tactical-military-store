@@ -6,6 +6,9 @@ import 'supabase_client.dart';
 class SupabaseProductService {
   final _supabase = SupabaseClientService.client;
 
+  // =====================================================
+  // ✅ إنشاء منتج وإرجاع ID
+  // =====================================================
   Future<int> createProductAndReturnId({
     required String name,
     required String slug,
@@ -30,6 +33,9 @@ class SupabaseProductService {
     return res['id'] as int;
   }
 
+  // =====================================================
+  // ✅ جلب المنتجات حسب القسم
+  // =====================================================
   Future<List<Product>> getProductsByCategory(int categoryId) async {
     final res = await _supabase
         .from('products')
@@ -40,6 +46,21 @@ class SupabaseProductService {
     return (res as List).map((e) => Product.fromMap(e)).toList();
   }
 
+  // =====================================================
+  // 🛍️ جلب جميع المنتجات (Store Home Page)
+  // =====================================================
+  Future<List<Product>> getAllProducts() async {
+    final res = await _supabase
+        .from('products')
+        .select()
+        .order('created_at', ascending: false);
+
+    return (res as List).map((e) => Product.fromMap(e)).toList();
+  }
+
+  // =====================================================
+  // ✅ إضافة صورة إضافية للمنتج
+  // =====================================================
   Future<void> addProductImage({
     required int productId,
     required String imageUrl,
@@ -50,6 +71,9 @@ class SupabaseProductService {
     });
   }
 
+  // =====================================================
+  // ✅ جلب صور المنتج
+  // =====================================================
   Future<List<ProductImage>> getProductImages(int productId) async {
     final res = await _supabase
         .from('product_images')
@@ -60,6 +84,9 @@ class SupabaseProductService {
     return (res as List).map((e) => ProductImage.fromMap(e)).toList();
   }
 
+  // =====================================================
+  // ✅ إضافة مقاس + كمية للمنتج
+  // =====================================================
   Future<void> addProductVariant({
     required int productId,
     required String size,
@@ -72,6 +99,9 @@ class SupabaseProductService {
     });
   }
 
+  // =====================================================
+  // ✅ جلب المقاسات والكميات للمنتج
+  // =====================================================
   Future<List<ProductVariant>> getProductVariants(int productId) async {
     final res = await _supabase
         .from('product_variants')

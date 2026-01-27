@@ -1,6 +1,7 @@
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
+
 import 'package:tactical_military_store/core/services/storage_service.dart';
 import 'package:tactical_military_store/core/services/supabase_service.dart';
 
@@ -22,7 +23,6 @@ class _CreateProductDialogState extends State<CreateProductDialog> {
   final _priceController = TextEditingController();
 
   final List<Uint8List> _images = [];
-
   final List<_VariantRow> _variants = [];
 
   bool _isLoading = false;
@@ -84,7 +84,6 @@ class _CreateProductDialogState extends State<CreateProductDialog> {
     try {
       final slug = _generateSlug(_nameController.text);
 
-      // صورة رئيسية
       final mainImageUrl = await StorageService().uploadProductImage(
         bytes: _images.first,
         fileName: 'product_main_${DateTime.now().millisecondsSinceEpoch}.jpg',
@@ -100,11 +99,11 @@ class _CreateProductDialogState extends State<CreateProductDialog> {
         categoryId: widget.categoryId,
       );
 
-      // صور إضافية
       for (int i = 1; i < _images.length; i++) {
         final url = await StorageService().uploadProductImage(
           bytes: _images[i],
-          fileName: 'product_${DateTime.now().millisecondsSinceEpoch}_$i.jpg',
+          fileName:
+              'product_${DateTime.now().millisecondsSinceEpoch}_$i.jpg',
         );
 
         await SupabaseService().addProductImage(
@@ -113,7 +112,6 @@ class _CreateProductDialogState extends State<CreateProductDialog> {
         );
       }
 
-      // المقاسات والكميات
       for (final v in _variants) {
         await SupabaseService().addProductVariant(
           productId: productId,
@@ -136,6 +134,9 @@ class _CreateProductDialogState extends State<CreateProductDialog> {
   // ================= UI =================
   @override
   Widget build(BuildContext context) {
+    final isArabic =
+        Localizations.localeOf(context).languageCode == 'ar';
+
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Padding(
@@ -143,37 +144,56 @@ class _CreateProductDialogState extends State<CreateProductDialog> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              const Text(
-                'إضافة منتج',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              Text(
+                isArabic ? 'إضافة منتج' : 'Add Product',
+                style:
+                    const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
 
               const SizedBox(height: 16),
+
               TextField(
                 controller: _nameController,
-                decoration: const InputDecoration(labelText: 'اسم المنتج'),
+                decoration: InputDecoration(
+                  labelText: isArabic ? 'اسم المنتج' : 'Product Name',
+                ),
               ),
+
               const SizedBox(height: 8),
+
               TextField(
                 controller: _descriptionController,
-                decoration: const InputDecoration(labelText: 'الوصف'),
+                decoration: InputDecoration(
+                  labelText: isArabic ? 'الوصف' : 'Description',
+                ),
               ),
+
               const SizedBox(height: 8),
+
+              // ================= PRICE =================
               TextField(
                 controller: _priceController,
-                decoration: const InputDecoration(labelText: 'السعر'),
+                decoration: InputDecoration(
+                  labelText: isArabic ? 'السعر' : 'Price',
+                  hintText:
+                      isArabic ? 'مثال: 12000' : 'Example: 12000',
+                  suffixText: isArabic ? 'ريال' : 'YER',
+                ),
                 keyboardType: TextInputType.number,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                ],
               ),
 
               const SizedBox(height: 16),
 
-              // ================= IMAGES =================
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton.icon(
                   onPressed: _pickImages,
                   icon: const Icon(Icons.image),
-                  label: const Text('اختيار الصور'),
+                  label:
+                      Text(isArabic ? 'اختيار الصور' : 'Select Images'),
                 ),
               ),
 
@@ -209,13 +229,15 @@ class _CreateProductDialogState extends State<CreateProductDialog> {
 
               const SizedBox(height: 24),
 
-              // ================= VARIANTS =================
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'المقاسات والكميات',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                  Text(
+                    isArabic
+                        ? 'المقاسات والكميات'
+                        : 'Sizes & Quantities',
+                    style:
+                        const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   TextButton.icon(
                     onPressed: () {
@@ -223,7 +245,8 @@ class _CreateProductDialogState extends State<CreateProductDialog> {
                       setState(() {});
                     },
                     icon: const Icon(Icons.add),
-                    label: const Text('إضافة مقاس'),
+                    label:
+                        Text(isArabic ? 'إضافة مقاس' : 'Add Size'),
                   ),
                 ],
               ),
@@ -235,21 +258,28 @@ class _CreateProductDialogState extends State<CreateProductDialog> {
                     Expanded(
                       child: TextField(
                         controller: v.sizeController,
-                        decoration:
-                            const InputDecoration(labelText: 'المقاس'),
+                        decoration: InputDecoration(
+                          labelText: isArabic ? 'المقاس' : 'Size',
+                        ),
                       ),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: TextField(
                         controller: v.qtyController,
-                        decoration:
-                            const InputDecoration(labelText: 'الكمية'),
+                        decoration: InputDecoration(
+                          labelText:
+                              isArabic ? 'الكمية' : 'Quantity',
+                        ),
                         keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.delete, color: Colors.red),
+                      icon: const Icon(Icons.delete,
+                          color: Colors.red),
                       onPressed: () {
                         _variants.removeAt(index);
                         setState(() {});
@@ -265,7 +295,7 @@ class _CreateProductDialogState extends State<CreateProductDialog> {
                 onPressed: _isLoading ? null : _saveProduct,
                 child: _isLoading
                     ? const CircularProgressIndicator()
-                    : const Text('حفظ'),
+                    : Text(isArabic ? 'حفظ' : 'Save'),
               ),
             ],
           ),
@@ -277,6 +307,8 @@ class _CreateProductDialogState extends State<CreateProductDialog> {
 
 // ================= VARIANT HELPER =================
 class _VariantRow {
-  final TextEditingController sizeController = TextEditingController();
-  final TextEditingController qtyController = TextEditingController();
+  final TextEditingController sizeController =
+      TextEditingController();
+  final TextEditingController qtyController =
+      TextEditingController();
 }
