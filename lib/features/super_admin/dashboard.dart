@@ -4,8 +4,9 @@ import 'package:tactical_military_store/features/super_admin/users/super_admin_u
 import 'package:tactical_military_store/features/super_admin/categories/categories_page.dart';
 import 'package:tactical_military_store/features/super_admin/orders/orders_page.dart';
 import 'package:tactical_military_store/features/super_admin/contests/contests_dashboard_page.dart';
-import 'package:tactical_military_store/features/home/home_page.dart';
+import 'package:tactical_military_store/features/super_admin/notifications/super_admin_notifications_page.dart';
 
+import 'package:tactical_military_store/features/home/home_page.dart';
 import 'package:tactical_military_store/core/theme/military_theme.dart';
 
 class SuperAdminDashboardPage extends StatelessWidget {
@@ -14,10 +15,8 @@ class SuperAdminDashboardPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // ✅ خلفية سكري رسمية
       backgroundColor: MilitaryTheme.sand,
 
-      // ✅ AppBar احترافي
       appBar: AppBar(
         centerTitle: true,
         title: const Text(
@@ -36,7 +35,6 @@ class SuperAdminDashboardPage extends StatelessWidget {
           mainAxisSpacing: 18,
           crossAxisSpacing: 18,
           childAspectRatio: 1.05,
-
           children: [
             _DashboardCard(
               icon: Icons.people_alt_rounded,
@@ -108,14 +106,16 @@ class SuperAdminDashboardPage extends StatelessWidget {
               },
             ),
 
+            // ✅ زر الإشعارات الجديد
             _DashboardCard(
-              icon: Icons.settings_rounded,
-              title: "الإعدادات",
-              subtitle: "قريبًا سيتم تطويرها",
+              icon: Icons.notifications_active_rounded,
+              title: "الإشعارات",
+              subtitle: "إرسال إشعار لكل المستخدمين",
               onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("⚙️ صفحة الإعدادات سيتم تطويرها قريبًا"),
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const SuperAdminNotificationsPage(),
                   ),
                 );
               },

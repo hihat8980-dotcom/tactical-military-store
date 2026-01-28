@@ -10,6 +10,9 @@ import 'package:tactical_military_store/models/product_variant.dart';
 import 'package:tactical_military_store/core/services/supabase_service.dart';
 import 'package:tactical_military_store/features/cart/cart_provider.dart';
 
+// ✅ استدعاء قسم التعليقات
+import 'widgets/product_comments_section.dart';
+
 class ProductDetailsPage extends StatefulWidget {
   final Product product;
 
@@ -146,8 +149,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                           placeholder: (context, url) => Container(
                             color: Colors.grey.shade200,
                             child: const Center(
-                              child:
-                                  CircularProgressIndicator(strokeWidth: 2),
+                              child: CircularProgressIndicator(strokeWidth: 2),
                             ),
                           ),
                           errorWidget: (_, __, ___) =>
@@ -156,7 +158,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                       },
                     ),
 
-                    // dots (✅ بدون withOpacity)
+                    // dots
                     Positioned(
                       bottom: 10,
                       child: Row(
@@ -270,6 +272,11 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
               ),
             ],
           ),
+
+          const Divider(height: 40),
+
+          // ================= COMMENTS =================
+          const ProductCommentsSection(),
 
           const Divider(height: 40),
 

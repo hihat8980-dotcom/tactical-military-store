@@ -8,12 +8,18 @@ import 'package:tactical_military_store/models/product_image.dart';
 import 'package:tactical_military_store/models/product_variant.dart';
 import 'package:tactical_military_store/models/product_review.dart';
 
+// ✅ Notification Model
+import 'package:tactical_military_store/models/app_notification.dart';
+
 // ✅ Services Imports
 import 'supabase_auth_service.dart';
 import 'supabase_category_service.dart';
 import 'supabase_product_service.dart';
 import 'supabase_order_service.dart';
 import 'supabase_review_contest_service.dart';
+
+// ✅ Notifications Service Import (المسار الجديد الصحيح)
+import 'package:tactical_military_store/core/services/supabase/supabase_notification_service.dart';
 
 class SupabaseService {
   static final SupabaseService _instance = SupabaseService._internal();
@@ -26,6 +32,9 @@ class SupabaseService {
   final products = SupabaseProductService();
   final orders = SupabaseOrderService();
   final reviews = SupabaseReviewContestService();
+
+  // ✅ Notifications Service
+  final notifications = SupabaseNotificationService();
 
   // =====================================================
   // 🔐 AUTH
@@ -222,5 +231,23 @@ class SupabaseService {
       reviews.toggleContest(
         contestId: contestId,
         isActive: isActive,
+      );
+
+  // =====================================================
+  // 🔔 NOTIFICATIONS (جديد رسميًا)
+  // =====================================================
+
+  /// ✅ جلب كل الإشعارات للمستخدمين
+  Future<List<AppNotification>> getNotifications() =>
+      notifications.getNotifications();
+
+  /// ✅ إرسال إشعار جديد من Super Admin
+  Future<void> sendNotification({
+    required String title,
+    required String body,
+  }) =>
+      notifications.sendNotification(
+        title: title,
+        body: body,
       );
 }

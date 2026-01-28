@@ -1,54 +1,154 @@
 import 'package:flutter/material.dart';
-import 'package:tactical_military_store/core/services/token_service.dart';
+
+import 'package:tactical_military_store/features/auth/login_page.dart';
+import 'package:tactical_military_store/core/services/supabase_service.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
 
-  Future<void> _logout(BuildContext context) async {
-    await TokenService().clearAll();
-
-    if (!context.mounted) return;
-
-    Navigator.pushNamedAndRemoveUntil(
-      context,
-      '/',
-      (route) => false,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    final user = SupabaseService().currentUser;
+
+    // ============================
+    // ✅ Guest (Not Logged In)
+    // ============================
+    if (user == null) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text("الحساب"),
+          centerTitle: true,
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(22),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.person_outline,
+                size: 95,
+                color: Colors.grey,
+              ),
+              const SizedBox(height: 18),
+
+              const Text(
+                "أضف حسابك الآن",
+                style: TextStyle(
+                  fontSize: 19,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+
+              const Text(
+                "سجل دخولك للاستفادة من الطلبات والعروض والخصومات",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.grey,
+                  fontSize: 13,
+                ),
+              ),
+              const SizedBox(height: 28),
+
+              // ✅ زر واحد فقط
+              SizedBox(
+                width: double.infinity,
+                height: 55,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.greenAccent,
+                    foregroundColor: Colors.black,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                  ),
+                  child: const Text(
+                    "تسجيل الدخول / إنشاء حساب",
+                    style: TextStyle(
+                      fontSize: 15.5,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const LoginPage(),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // ============================
+    // ✅ Logged In User
+    // ============================
     return Scaffold(
       appBar: AppBar(
-        title: const Text('حسابي'),
+        title: const Text("حسابي"),
         centerTitle: true,
       ),
       body: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(22),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'معلومات الحساب',
-              style: TextStyle(
-                fontSize: 20,
+            const SizedBox(height: 20),
+
+            const CircleAvatar(
+              radius: 45,
+              child: Icon(Icons.person, size: 50),
+            ),
+
+            const SizedBox(height: 14),
+
+            Text(
+              user.email ?? "مستخدم",
+              style: const TextStyle(
+                fontSize: 17,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 24),
-            ListTile(
-              leading: const Icon(Icons.person),
-              title: const Text('المستخدم'),
-              subtitle: const Text('تم تسجيل الدخول بنجاح'),
-            ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.logout, color: Colors.red),
-              title: const Text(
-                'تسجيل الخروج',
-                style: TextStyle(color: Colors.red),
+
+            const SizedBox(height: 8),
+
+            const Text(
+              "تم تسجيل الدخول بنجاح ✅",
+              style: TextStyle(
+                color: Colors.green,
               ),
-              onTap: () => _logout(context),
+            ),
+
+            const SizedBox(height: 30),
+
+            // زر تسجيل خروج
+            SizedBox(
+              width: double.infinity,
+              height: 55,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.redAccent,
+                ),
+                icon: const Icon(Icons.logout),
+                label: const Text("تسجيل الخروج"),
+                onPressed: () async {
+                  await SupabaseService().signOut();
+
+                  if (context.mounted) {
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const LoginPage(),
+                      ),
+                      (route) => false,
+                    );
+                  }
+                },
+              ),
             ),
           ],
         ),

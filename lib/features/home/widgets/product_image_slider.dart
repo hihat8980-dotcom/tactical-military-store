@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-
 import 'package:tactical_military_store/models/product.dart';
 import 'package:tactical_military_store/models/product_image.dart';
 
@@ -19,14 +18,8 @@ class ProductImageSlider extends StatefulWidget {
 }
 
 class _ProductImageSliderState extends State<ProductImageSlider> {
-  int _index = 0;
   final PageController _controller = PageController();
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
+  int _index = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -40,10 +33,13 @@ class _ProductImageSliderState extends State<ProductImageSlider> {
             ...?snapshot.data?.map((e) => e.imageUrl),
           ];
 
+          if (images.isEmpty) {
+            return const Center(child: Icon(Icons.image_not_supported));
+          }
+
           return Stack(
-            alignment: Alignment.center,
             children: [
-              // ================= SLIDER =================
+              // الصور
               PageView.builder(
                 controller: _controller,
                 itemCount: images.length,
@@ -65,50 +61,53 @@ class _ProductImageSliderState extends State<ProductImageSlider> {
                 },
               ),
 
-              // ================= LEFT ARROW =================
-              Positioned(
-                left: 8,
-                child: IconButton(
-                  icon: const Icon(
-                    Icons.arrow_back_ios_new,
-                    color: Colors.white,
-                    size: 22,
+              // سهم يسار
+              if (images.length > 1)
+                Positioned(
+                  left: 8,
+                  top: 0,
+                  bottom: 0,
+                  child: IconButton(
+                    icon: const Icon(Icons.arrow_back_ios,
+                        color: Colors.white),
+                    onPressed: () {
+                      if (_index > 0) {
+                        _controller.previousPage(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeOut,
+                        );
+                      }
+                    },
                   ),
-                  onPressed: () {
-                    if (_index > 0) {
-                      _controller.previousPage(
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeInOut,
-                      );
-                    }
-                  },
                 ),
-              ),
 
-              // ================= RIGHT ARROW =================
-              Positioned(
-                right: 8,
-                child: IconButton(
-                  icon: const Icon(
-                    Icons.arrow_forward_ios,
-                    color: Colors.white,
-                    size: 22,
+              // سهم يمين
+              if (images.length > 1)
+                Positioned(
+                  right: 8,
+                  top: 0,
+                  bottom: 0,
+                  child: IconButton(
+                    icon: const Icon(Icons.arrow_forward_ios,
+                        color: Colors.white),
+                    onPressed: () {
+                      if (_index < images.length - 1) {
+                        _controller.nextPage(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeOut,
+                        );
+                      }
+                    },
                   ),
-                  onPressed: () {
-                    if (_index < images.length - 1) {
-                      _controller.nextPage(
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeInOut,
-                      );
-                    }
-                  },
                 ),
-              ),
 
-              // ================= DOTS =================
+              // النقاط
               Positioned(
-                bottom: 10,
+                bottom: 12,
+                left: 0,
+                right: 0,
                 child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: List.generate(
                     images.length,
                     (i) => AnimatedContainer(
