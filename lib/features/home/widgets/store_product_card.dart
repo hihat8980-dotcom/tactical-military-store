@@ -29,8 +29,7 @@ class StoreProductCard extends StatelessWidget {
             boxShadow: [
               BoxShadow(
                 blurRadius: 6,
-                offset: const Offset(0, 4),
-                color: Colors.black.withValues(alpha: 0.07),
+                color: Colors.black.withValues(alpha: 0.06),
               ),
             ],
           ),
@@ -38,26 +37,21 @@ class StoreProductCard extends StatelessWidget {
           child: Column(
             children: [
               // =====================================================
-              // ✅ IMAGE (Flexible)
+              // ✅ IMAGE SECTION (Auto Expand)
               // =====================================================
               Expanded(
                 child: Stack(
                   children: [
-                    // صور المنتج
-                    snapshot.connectionState == ConnectionState.waiting
-                        ? const Center(
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : PageView.builder(
-                            itemCount: images.length,
-                            itemBuilder: (context, index) {
-                              return Image.network(
-                                images[index],
-                                fit: BoxFit.cover,
-                                width: double.infinity,
-                              );
-                            },
-                          ),
+                    PageView.builder(
+                      itemCount: images.length,
+                      itemBuilder: (context, index) {
+                        return Image.network(
+                          images[index],
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                        );
+                      },
+                    ),
 
                     // ❤️ Favorite Button
                     Positioned(
@@ -67,10 +61,16 @@ class StoreProductCard extends StatelessWidget {
                         radius: 16,
                         backgroundColor:
                             Colors.white.withValues(alpha: 0.9),
-                        child: Icon(
-                          Icons.favorite_border,
-                          size: 17,
-                          color: Colors.redAccent,
+                        child: IconButton(
+                          padding: EdgeInsets.zero,
+                          icon: const Icon(
+                            Icons.favorite_border,
+                            size: 17,
+                            color: Colors.redAccent,
+                          ),
+                          onPressed: () {
+                            Navigator.pushNamed(context, "/favorites");
+                          },
                         ),
                       ),
                     ),
@@ -86,7 +86,7 @@ class StoreProductCard extends StatelessWidget {
                         ),
                         decoration: BoxDecoration(
                           color: Colors.orange,
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                         child: const Text(
                           "الأكثر مبيعًا",
@@ -103,80 +103,66 @@ class StoreProductCard extends StatelessWidget {
               ),
 
               // =====================================================
-              // ✅ INFO SECTION (Small + No Overflow)
+              // ✅ FIXED INFO HEIGHT (Never Overflow)
               // =====================================================
-              Padding(
-                padding: const EdgeInsets.all(8),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // اسم المنتج
-                    Text(
-                      product.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w600,
+              SizedBox(
+                height: 72,
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Name
+                      Text(
+                        product.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
 
-                    const SizedBox(height: 5),
-
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        // السعر
-                        Text(
-                          "${product.price.toStringAsFixed(0)} YER",
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.green,
-                          ),
-                        ),
-
-                        // 🛒 Cart Button
-                        InkWell(
-                          borderRadius: BorderRadius.circular(50),
-                          onTap: () {
-                            context.read<CartProvider>().addToCart(
-                                  product: product,
-                                  size: "Default",
-                                  quantity: 1,
-                                );
-
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                duration: const Duration(seconds: 1),
-                                content: Text(
-                                  "🛒 تمت إضافة ${product.name}",
-                                ),
-                              ),
-                            );
-                          },
-                          child: Container(
-                            height: 28,
-                            width: 28,
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [
-                                  Color(0xFF00C853),
-                                  Color(0xFF009624),
-                                ],
-                              ),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.shopping_cart_outlined,
-                              size: 15,
-                              color: Colors.white,
+                      // Price + Cart
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "${product.price.toStringAsFixed(0)} YER",
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green,
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+
+                          InkWell(
+                            borderRadius: BorderRadius.circular(50),
+                            onTap: () {
+                              context.read<CartProvider>().addToCart(
+                                    product: product,
+                                    size: "Default",
+                                    quantity: 1,
+                                  );
+                            },
+                            child: Container(
+                              height: 28,
+                              width: 28,
+                              decoration: const BoxDecoration(
+                                color: Colors.black,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.shopping_cart_outlined,
+                                size: 15,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
