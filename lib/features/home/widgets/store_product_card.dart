@@ -30,44 +30,87 @@ class StoreProductCard extends StatelessWidget {
               BoxShadow(
                 blurRadius: 6,
                 offset: const Offset(0, 4),
-                color: Colors.black.withValues(alpha: 0.08),
+                color: Colors.black.withValues(alpha: 0.07),
               ),
             ],
           ),
           clipBehavior: Clip.antiAlias,
           child: Column(
-            mainAxisSize: MainAxisSize.min,
             children: [
-              // ✅ صورة أقصر
-              SizedBox(
-                height: 115,
-                width: double.infinity,
-                child: snapshot.connectionState == ConnectionState.waiting
-                    ? const Center(
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : PageView.builder(
-                        itemCount: images.length,
-                        itemBuilder: (context, index) {
-                          return Image.network(
-                            images[index],
-                            fit: BoxFit.cover,
-                          );
-                        },
+              // =====================================================
+              // ✅ IMAGE (Flexible)
+              // =====================================================
+              Expanded(
+                child: Stack(
+                  children: [
+                    // صور المنتج
+                    snapshot.connectionState == ConnectionState.waiting
+                        ? const Center(
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : PageView.builder(
+                            itemCount: images.length,
+                            itemBuilder: (context, index) {
+                              return Image.network(
+                                images[index],
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                              );
+                            },
+                          ),
+
+                    // ❤️ Favorite Button
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: CircleAvatar(
+                        radius: 16,
+                        backgroundColor:
+                            Colors.white.withValues(alpha: 0.9),
+                        child: Icon(
+                          Icons.favorite_border,
+                          size: 17,
+                          color: Colors.redAccent,
+                        ),
                       ),
+                    ),
+
+                    // 🔥 Badge
+                    Positioned(
+                      top: 8,
+                      left: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.orange,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Text(
+                          "الأكثر مبيعًا",
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
 
-              // ✅ معلومات مضغوطة جدًا
+              // =====================================================
+              // ✅ INFO SECTION (Small + No Overflow)
+              // =====================================================
               Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 8,
-                ),
+                padding: const EdgeInsets.all(8),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // الاسم
+                    // اسم المنتج
                     Text(
                       product.name,
                       maxLines: 1,
@@ -80,10 +123,10 @@ class StoreProductCard extends StatelessWidget {
 
                     const SizedBox(height: 5),
 
-                    // السعر + زر السلة
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
+                        // السعر
                         Text(
                           "${product.price.toStringAsFixed(0)} YER",
                           style: const TextStyle(
@@ -93,7 +136,7 @@ class StoreProductCard extends StatelessWidget {
                           ),
                         ),
 
-                        // زر سلة صغير واحترافي
+                        // 🛒 Cart Button
                         InkWell(
                           borderRadius: BorderRadius.circular(50),
                           onTap: () {
@@ -113,22 +156,20 @@ class StoreProductCard extends StatelessWidget {
                             );
                           },
                           child: Container(
-                            height: 30,
-                            width: 30,
+                            height: 28,
+                            width: 28,
                             decoration: BoxDecoration(
-                              color: Colors.black,
+                              gradient: const LinearGradient(
+                                colors: [
+                                  Color(0xFF00C853),
+                                  Color(0xFF009624),
+                                ],
+                              ),
                               shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  blurRadius: 5,
-                                  color:
-                                      Colors.black.withValues(alpha: 0.18),
-                                ),
-                              ],
                             ),
                             child: const Icon(
                               Icons.shopping_cart_outlined,
-                              size: 16,
+                              size: 15,
                               color: Colors.white,
                             ),
                           ),

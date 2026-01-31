@@ -24,8 +24,8 @@ class ProductsGrid extends StatelessWidget {
         crossAxisSpacing: 14,
         mainAxisSpacing: 14,
 
-        // ✅ يجعل الكرت أقصر
-        childAspectRatio: 0.92,
+        // ✅ أفضل Ratio يخلي الكرت قصير واحترافي
+        childAspectRatio: 1.15,
       ),
       itemBuilder: (context, index) {
         final product = products[index];
