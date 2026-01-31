@@ -3,10 +3,11 @@ class ProductReview {
   final int productId;
 
   final int rating;
-  final String? comment;
-  final DateTime createdAt;
 
-  // ✅ nickname بدل username
+  // ✅ اجعله غير nullable
+  final String comment;
+
+  final DateTime createdAt;
   final String nickname;
 
   ProductReview({
@@ -23,7 +24,10 @@ class ProductReview {
       id: map['id'] as int,
       productId: map['product_id'] as int,
       rating: map['rating'] as int,
-      comment: map['comment'] as String?,
+
+      // ✅ إذا كان null نضع نص فارغ
+      comment: map['comment'] ?? "",
+
       createdAt: DateTime.parse(map['created_at']),
       nickname: map['nickname'] ?? "مستخدم",
     );

@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
 import 'package:tactical_military_store/core/services/supabase_service.dart';
 import 'package:tactical_military_store/models/category.dart';
 import 'package:tactical_military_store/models/product.dart';
 import 'package:tactical_military_store/models/app_user.dart';
+
+import 'package:tactical_military_store/features/cart/cart_provider.dart';
 import 'package:tactical_military_store/features/super_admin/products/create_product_dialog.dart';
 import 'package:tactical_military_store/features/home/product_details_page.dart';
 
@@ -58,7 +62,6 @@ class _CategoryProductsPageState extends State<CategoryProductsPage> {
     });
   }
 
-  // ================= UI =================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -67,10 +70,11 @@ class _CategoryProductsPageState extends State<CategoryProductsPage> {
         centerTitle: true,
       ),
 
+      // ✅ زر إضافة منتج (Admins فقط)
       floatingActionButton: _canShowAddProductButton
           ? FloatingActionButton.extended(
               icon: const Icon(Icons.add),
-              label: const Text('إضافة منتج'),
+              label: const Text("إضافة منتج"),
               onPressed: () async {
                 final result = await showDialog<bool>(
                   context: context,
@@ -90,19 +94,22 @@ class _CategoryProductsPageState extends State<CategoryProductsPage> {
           }
 
           if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('لا توجد منتجات في هذا القسم'));
+            return const Center(child: Text("لا توجد منتجات في هذا القسم"));
           }
 
           final products = snapshot.data!;
 
           return GridView.builder(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(14),
+
+            // ✅ Smaller Cards
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
-              mainAxisSpacing: 18,
-              crossAxisSpacing: 18,
-              childAspectRatio: 0.72,
+              mainAxisSpacing: 14,
+              crossAxisSpacing: 14,
+              childAspectRatio: 0.78,
             ),
+
             itemCount: products.length,
             itemBuilder: (context, index) {
               final product = products[index];
@@ -112,114 +119,176 @@ class _CategoryProductsPageState extends State<CategoryProductsPage> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) =>
-                          ProductDetailsPage(product: product),
+                      builder: (_) => ProductDetailsPage(product: product),
                     ),
                   );
                 },
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(18),
-                    color: Theme.of(context).colorScheme.surface,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.08),
-                        blurRadius: 10,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // ================= IMAGE =================
-                      Stack(
-                        children: [
-                          AspectRatio(
-                            aspectRatio: 1,
-                            child: Image.network(
-                              product.imageUrl,
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                            ),
-                          ),
-
-                          // 💰 PRICE BADGE
-                          Positioned(
-                            bottom: 10,
-                            right: 10,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.black.withValues(alpha: 0.7),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                '${product.price} \$',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
-
-                          // ✏️ EDIT BUTTON
-                          if (_canShowAddProductButton)
-                            Positioned(
-                              top: 8,
-                              right: 8,
-                              child: CircleAvatar(
-                                radius: 18,
-                                backgroundColor:
-                                    Colors.black.withValues(alpha: 0.6),
-                                child: const Icon(
-                                  Icons.edit,
-                                  size: 18,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-
-                      // ================= INFO =================
-                      Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              product.name,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            const Text(
-                              'جودة عالية • منتج مضمون',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                child: _CompactProductCard(product: product),
               );
             },
           );
         },
+      ),
+    );
+  }
+}
+
+//////////////////////////////////////////////////////////////////
+// ✅ Compact Product Card + Small Cart Button
+//////////////////////////////////////////////////////////////////
+
+class _CompactProductCard extends StatelessWidget {
+  final Product product;
+
+  const _CompactProductCard({
+    required this.product,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF141A22),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            blurRadius: 6,
+            offset: const Offset(0, 4),
+            color: Colors.black.withValues(alpha: 0.12),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ================= IMAGE + CART BUTTON =================
+          Stack(
+            children: [
+              ClipRRect(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(16),
+                ),
+                child: Image.network(
+                  product.imageUrl,
+                  height: 110,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                ),
+              ),
+
+              // ✅ Small Cart Button (Top Right)
+              Positioned(
+                top: 6,
+                right: 6,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(50),
+                  onTap: () {
+                    context.read<CartProvider>().addToCart(
+                          product: product,
+                          size: "Default",
+                          quantity: 1,
+                        );
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          "🛒 تمت إضافة ${product.name} إلى السلة",
+                        ),
+                        duration: const Duration(seconds: 1),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.65),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.shopping_cart_outlined,
+                      size: 16,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          // ================= INFO =================
+          Padding(
+            padding: const EdgeInsets.all(8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Product Name
+                Text(
+                  product.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+
+                const SizedBox(height: 4),
+
+                // Price
+                Text(
+                  "${product.price.toStringAsFixed(0)} YER",
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.greenAccent,
+                  ),
+                ),
+
+                const SizedBox(height: 6),
+
+                // Add Button
+                SizedBox(
+                  height: 28,
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.greenAccent,
+                      padding: EdgeInsets.zero,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    onPressed: () {
+                      context.read<CartProvider>().addToCart(
+                            product: product,
+                            size: "Default",
+                            quantity: 1,
+                          );
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content:
+                              Text("🛒 تمت إضافة ${product.name} إلى السلة"),
+                          duration: const Duration(seconds: 1),
+                        ),
+                      );
+                    },
+                    child: const Text(
+                      "إضافة",
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

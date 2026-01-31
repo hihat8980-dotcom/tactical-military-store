@@ -6,8 +6,10 @@ import 'core/services/supabase_service.dart';
 import 'core/theme/military_theme.dart';
 import 'features/splash/splash_page.dart';
 
-// ✅ المسار الصحيح للسلة
 import 'features/cart/cart_provider.dart';
+
+// ✅ Notifications Page
+import 'features/notifications/notifications_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,7 +30,7 @@ void main() async {
   );
 }
 
-// ✅ تحديث last seen
+// ✅ Update last seen
 class _AppLifecycleObserver extends WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
@@ -45,12 +47,14 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Tactical Military Store',
-
-      // ✅ تطبيق الثيم العسكري السكري
+      title: "Tactical Military Store",
       theme: MilitaryTheme.theme,
-
       home: const SplashPage(),
+
+      // ✅ Routes
+      routes: {
+        "/notifications": (_) => const NotificationsPage(),
+      },
     );
   }
 }

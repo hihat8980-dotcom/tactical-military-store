@@ -4,7 +4,9 @@ import 'package:tactical_military_store/features/super_admin/users/super_admin_u
 import 'package:tactical_military_store/features/super_admin/categories/categories_page.dart';
 import 'package:tactical_military_store/features/super_admin/orders/orders_page.dart';
 import 'package:tactical_military_store/features/super_admin/contests/contests_dashboard_page.dart';
-import 'package:tactical_military_store/features/super_admin/notifications/super_admin_notifications_page.dart';
+
+// ✅ المسار الجديد الصحيح للإشعارات
+import 'package:tactical_military_store/features/notifications/super_admin_notifications_page.dart';
 
 import 'package:tactical_military_store/features/home/home_page.dart';
 import 'package:tactical_military_store/core/theme/military_theme.dart';
@@ -106,7 +108,7 @@ class SuperAdminDashboardPage extends StatelessWidget {
               },
             ),
 
-            // ✅ زر الإشعارات الجديد
+            // ✅ زر الإشعارات الجديد (بعد تعديل const)
             _DashboardCard(
               icon: Icons.notifications_active_rounded,
               title: "الإشعارات",
@@ -115,7 +117,7 @@ class SuperAdminDashboardPage extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => const SuperAdminNotificationsPage(),
+                    builder: (_) => SuperAdminNotificationsPage(),
                   ),
                 );
               },

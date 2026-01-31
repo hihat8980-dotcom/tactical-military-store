@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 
 import 'package:tactical_military_store/models/product.dart';
 import 'package:tactical_military_store/models/product_image.dart';
@@ -10,7 +9,9 @@ import 'package:tactical_military_store/models/product_variant.dart';
 import 'package:tactical_military_store/core/services/supabase_service.dart';
 import 'package:tactical_military_store/features/cart/cart_provider.dart';
 
-// ✅ استدعاء قسم التعليقات
+import 'widgets/product_image_slider.dart';
+import 'widgets/product_info_section.dart';
+import 'widgets/product_variants_section.dart';
 import 'widgets/product_comments_section.dart';
 
 class ProductDetailsPage extends StatefulWidget {
@@ -33,31 +34,34 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
   String? _selectedSize;
   int _quantity = 1;
 
-  int _currentImage = 0;
-  final PageController _pageController = PageController();
+  bool _isSuperAdmin = false;
 
   @override
   void initState() {
     super.initState();
+
     final service = SupabaseService();
 
     _imagesFuture = service.getProductImages(widget.product.id);
     _variantsFuture = service.getProductVariants(widget.product.id);
     _sameCategoryFuture =
         service.getProductsByCategory(widget.product.categoryId);
+
+    _loadRole();
   }
 
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
+  Future<void> _loadRole() async {
+    final user = await SupabaseService().getCurrentUserFromDatabase();
+    if (user != null && user.role == "super_admin") {
+      setState(() => _isSuperAdmin = true);
+    }
   }
 
   // ================= ADD TO CART =================
   void _addToCart() {
     context.read<CartProvider>().addToCart(
           product: widget.product,
-          size: _selectedSize ?? 'default',
+          size: _selectedSize ?? "بدون مقاس",
           quantity: _quantity,
         );
 
@@ -69,48 +73,73 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
   // ================= WHATSAPP =================
   Future<void> _buyViaWhatsApp() async {
     final message =
-        "🛒 طلب شراء\n\n"
-        "المنتج: ${widget.product.name}\n"
-        "المقاس: ${_selectedSize ?? 'بدون'}\n"
-        "الكمية: $_quantity\n"
-        "السعر: ${widget.product.price.toStringAsFixed(0)} YER\n\n"
-        "الصورة:\n${widget.product.imageUrl}";
+        "🛒 طلب شراء جديد\n\n"
+        "📌 المنتج: ${widget.product.name}\n"
+        "📏 المقاس: ${_selectedSize ?? "بدون مقاس"}\n"
+        "🔢 الكمية: $_quantity\n"
+        "💰 السعر: ${widget.product.price.toStringAsFixed(0)} YER\n\n"
+        "🖼 صورة المنتج:\n${widget.product.imageUrl}";
 
     final url =
         "https://wa.me/967770004140?text=${Uri.encodeComponent(message)}";
 
-    await launchUrl(
-      Uri.parse(url),
-      mode: LaunchMode.externalApplication,
-    );
+    await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
   }
 
+  // ================= UI =================
   @override
   Widget build(BuildContext context) {
     final p = widget.product;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(p.name),
+        title: Text(
+          p.name,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
         centerTitle: true,
       ),
 
-      // ================= ACTION BAR =================
-      bottomNavigationBar: Padding(
+      // ✅ Bottom Action Bar
+      bottomNavigationBar: Container(
         padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          boxShadow: [
+            BoxShadow(
+              blurRadius: 12,
+              color: Colors.black.withValues(alpha: 0.08),
+              offset: const Offset(0, -4),
+            ),
+          ],
+        ),
         child: Row(
           children: [
             Expanded(
-              child: ElevatedButton(
+              child: ElevatedButton.icon(
                 onPressed: _addToCart,
-                child: const Text("أضف للسلة"),
+                icon: const Icon(Icons.shopping_cart_checkout),
+                label: const Text("أضف للسلة"),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: OutlinedButton(
+              child: OutlinedButton.icon(
                 onPressed: _buyViaWhatsApp,
-                child: const Text("شراء سريع"),
+                icon: const Icon(Icons.flash_on),
+                label: const Text("شراء سريع"),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
               ),
             ),
           ],
@@ -119,179 +148,110 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
 
       // ================= BODY =================
       body: ListView(
+        padding: const EdgeInsets.only(bottom: 30),
         children: [
-          // ================= IMAGE SLIDER =================
-          SizedBox(
-            height: 320,
-            child: FutureBuilder<List<ProductImage>>(
-              future: _imagesFuture,
-              builder: (context, snapshot) {
-                final images = snapshot.hasData
-                    ? [
-                        p.imageUrl,
-                        ...snapshot.data!.map((e) => e.imageUrl),
-                      ]
-                    : [p.imageUrl];
-
-                return Stack(
-                  alignment: Alignment.bottomCenter,
-                  children: [
-                    PageView.builder(
-                      controller: _pageController,
-                      itemCount: images.length,
-                      onPageChanged: (i) =>
-                          setState(() => _currentImage = i),
-                      itemBuilder: (_, i) {
-                        return CachedNetworkImage(
-                          imageUrl: images[i],
-                          fit: BoxFit.cover,
-                          width: double.infinity,
-                          placeholder: (context, url) => Container(
-                            color: Colors.grey.shade200,
-                            child: const Center(
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            ),
-                          ),
-                          errorWidget: (_, __, ___) =>
-                              const Icon(Icons.broken_image),
-                        );
-                      },
-                    ),
-
-                    // dots
-                    Positioned(
-                      bottom: 10,
-                      child: Row(
-                        children: List.generate(
-                          images.length,
-                          (i) => Container(
-                            margin:
-                                const EdgeInsets.symmetric(horizontal: 4),
-                            width: _currentImage == i ? 14 : 8,
-                            height: 8,
-                            decoration: BoxDecoration(
-                              color: _currentImage == i
-                                  ? Colors.greenAccent
-                                  : Colors.white.withValues(alpha: 0.4),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              },
-            ),
-          ),
-
-          // ================= INFO =================
+          // ✅ Image Slider
           Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  p.name,
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  "${p.price.toStringAsFixed(0)} YER",
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  p.description,
-                  style: const TextStyle(color: Colors.grey),
-                ),
-              ],
+            padding: const EdgeInsets.all(14),
+            child: ProductImageSlider(
+              product: p,
+              imagesFuture: _imagesFuture,
             ),
           ),
 
-          // ================= VARIANTS (اختياري) =================
-          FutureBuilder<List<ProductVariant>>(
-            future: _variantsFuture,
-            builder: (context, snapshot) {
-              if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return const SizedBox();
-              }
+          // ✅ Info Section
+          ProductInfoSection(product: p),
 
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Wrap(
-                  spacing: 8,
-                  children: snapshot.data!
-                      .map(
-                        (v) => ChoiceChip(
-                          label: Text(v.size),
-                          selected: _selectedSize == v.size,
-                          onSelected: (_) {
-                            setState(() {
-                              _selectedSize = v.size;
-                              _quantity = 1;
-                            });
-                          },
-                        ),
-                      )
-                      .toList(),
-                ),
-              );
+          const SizedBox(height: 10),
+
+          // ✅ Variants Section (اختياري)
+          ProductVariantsSection(
+            variantsFuture: _variantsFuture,
+            selectedSize: _selectedSize,
+            onSelected: (v) {
+              setState(() {
+                _selectedSize = v;
+                _quantity = 1;
+              });
             },
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 18),
 
-          // ================= QUANTITY =================
+          // ✅ Quantity Selector
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              IconButton(
-                onPressed: _quantity > 1
-                    ? () => setState(() => _quantity--)
-                    : null,
-                icon: const Icon(Icons.remove),
+              _qtyButton(
+                icon: Icons.remove,
+                onTap: () {
+                  if (_quantity > 1) setState(() => _quantity--);
+                },
               ),
-              Text(
-                "$_quantity",
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 18),
+                child: Text(
+                  "$_quantity",
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
-              IconButton(
-                onPressed: () => setState(() => _quantity++),
-                icon: const Icon(Icons.add),
+              _qtyButton(
+                icon: Icons.add,
+                onTap: () => setState(() => _quantity++),
               ),
             ],
           ),
 
           const Divider(height: 40),
 
-          // ================= COMMENTS =================
-          const ProductCommentsSection(),
+          // ✅ Comments Section (مصحح)
+          ProductCommentsSection(
+            productId: p.id,
+            isSuperAdmin: _isSuperAdmin,
+          ),
 
           const Divider(height: 40),
 
-          // ================= SAME CATEGORY PRODUCTS =================
+          // ✅ Same Category Products
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Text(
+              "🛍 منتجات من نفس القسم",
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
           FutureBuilder<List<Product>>(
             future: _sameCategoryFuture,
             builder: (context, snapshot) {
-              if (!snapshot.hasData) return const SizedBox();
+              if (!snapshot.hasData) {
+                return const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(20),
+                    child: CircularProgressIndicator(),
+                  ),
+                );
+              }
 
               final items = snapshot.data!
                   .where((e) => e.id != p.id)
                   .take(6)
                   .toList();
 
-              if (items.isEmpty) return const SizedBox();
+              if (items.isEmpty) {
+                return const Padding(
+                  padding: EdgeInsets.all(20),
+                  child: Center(child: Text("لا توجد منتجات أخرى")),
+                );
+              }
 
               return GridView.builder(
                 padding: const EdgeInsets.all(16),
@@ -302,7 +262,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                   crossAxisCount: 2,
                   crossAxisSpacing: 14,
                   mainAxisSpacing: 14,
-                  childAspectRatio: 0.75,
+                  childAspectRatio: 0.78,
                 ),
                 itemCount: items.length,
                 itemBuilder: (context, i) {
@@ -313,29 +273,38 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
-                          builder: (_) =>
-                              ProductDetailsPage(product: sp),
+                          builder: (_) => ProductDetailsPage(product: sp),
                         ),
                       );
                     },
-                    child: Card(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(18),
+                        color: Theme.of(context).cardColor,
+                        boxShadow: [
+                          BoxShadow(
+                            blurRadius: 10,
+                            color: Colors.black.withValues(alpha: 0.08),
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
                       ),
                       child: Column(
                         children: [
                           Expanded(
-                            child: CachedNetworkImage(
-                              imageUrl: sp.imageUrl,
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                              placeholder: (c, u) => Container(
-                                color: Colors.grey.shade200,
+                            child: ClipRRect(
+                              borderRadius: const BorderRadius.vertical(
+                                top: Radius.circular(18),
+                              ),
+                              child: Image.network(
+                                sp.imageUrl,
+                                fit: BoxFit.cover,
+                                width: double.infinity,
                               ),
                             ),
                           ),
                           Padding(
-                            padding: const EdgeInsets.all(8),
+                            padding: const EdgeInsets.all(10),
                             child: Column(
                               children: [
                                 Text(
@@ -346,7 +315,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                                const SizedBox(height: 4),
+                                const SizedBox(height: 5),
                                 Text(
                                   "${sp.price.toStringAsFixed(0)} YER",
                                   style: const TextStyle(
@@ -356,7 +325,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                 ),
                               ],
                             ),
-                          ),
+                          )
                         ],
                       ),
                     ),
@@ -365,9 +334,23 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
               );
             },
           ),
-
-          const SizedBox(height: 30),
         ],
+      ),
+    );
+  }
+
+  // ================= Quantity Button =================
+  Widget _qtyButton({required IconData icon, required VoidCallback onTap}) {
+    return Material(
+      color: Colors.grey.shade200,
+      shape: const CircleBorder(),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(50),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(10),
+          child: Icon(icon,size: 20),
+        ),
       ),
     );
   }

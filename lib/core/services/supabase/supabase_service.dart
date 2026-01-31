@@ -1,6 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-// ✅ Models Imports (مهم جدًا)
+// ✅ Models Imports
 import 'package:tactical_military_store/models/app_user.dart';
 import 'package:tactical_military_store/models/category.dart';
 import 'package:tactical_military_store/models/product.dart';
@@ -18,7 +18,7 @@ import 'supabase_product_service.dart';
 import 'supabase_order_service.dart';
 import 'supabase_review_contest_service.dart';
 
-// ✅ Notifications Service Import (المسار الجديد الصحيح)
+// ✅ Notifications Service Import
 import 'package:tactical_military_store/core/services/supabase/supabase_notification_service.dart';
 
 class SupabaseService {
@@ -118,7 +118,7 @@ class SupabaseService {
       products.createProductAndReturnId(
         name: name,
         slug: slug,
-        description: description,
+       description: description,
         price: price,
         imageUrl: imageUrl,
         categoryId: categoryId,
@@ -133,8 +133,20 @@ class SupabaseService {
   }) =>
       products.addProductImage(productId: productId, imageUrl: imageUrl);
 
+  /// ✅ الصور الأصلية كموديلات
   Future<List<ProductImage>> getProductImages(int productId) =>
       products.getProductImages(productId);
+
+  // =====================================================
+  // ✅ Product Images URLs (For Swipe Slider)
+  // =====================================================
+
+  /// 🔥 هذه الدالة ترجع فقط روابط الصور كـ `List<String>`
+  /// لكي تعمل داخل StoreProductCard بدون كسر أي شيء قديم
+  Future<List<String>> getProductImagesUrls(int productId) async {
+    final images = await products.getProductImages(productId);
+    return images.map((img) => img.imageUrl).toList();
+  }
 
   Future<void> addProductVariant({
     required int productId,
@@ -151,7 +163,7 @@ class SupabaseService {
       products.getProductVariants(productId);
 
   // =====================================================
-  // 🧾 ORDERS (UPDATED AUTH_ID SYSTEM)
+  // 🧾 ORDERS
   // =====================================================
 
   Future<void> createOrder({
@@ -177,7 +189,6 @@ class SupabaseService {
 
   Future<List<Map<String, dynamic>>> getAllOrders() => orders.getAllOrders();
 
-  // ✅ المستخدم يجلب طلباته عن طريق auth_id
   Future<List<Map<String, dynamic>>> getUserOrdersByAuthId({
     required String authId,
   }) =>
@@ -207,6 +218,9 @@ class SupabaseService {
         rating: rating,
       );
 
+  Future<void> deleteReview(int reviewId) =>
+      reviews.deleteReview(reviewId);
+
   // =====================================================
   // 🎯 CONTESTS
   // =====================================================
@@ -234,14 +248,12 @@ class SupabaseService {
       );
 
   // =====================================================
-  // 🔔 NOTIFICATIONS (جديد رسميًا)
+  // 🔔 NOTIFICATIONS
   // =====================================================
 
-  /// ✅ جلب كل الإشعارات للمستخدمين
   Future<List<AppNotification>> getNotifications() =>
       notifications.getNotifications();
 
-  /// ✅ إرسال إشعار جديد من Super Admin
   Future<void> sendNotification({
     required String title,
     required String body,
@@ -250,4 +262,13 @@ class SupabaseService {
         title: title,
         body: body,
       );
+
+  // =====================================================
+  // ✅ Notifications Count (Badge Number)
+  // =====================================================
+
+  Future<int> getNotificationsCount() async {
+    final list = await notifications.getNotifications();
+    return list.length;
+  }
 }

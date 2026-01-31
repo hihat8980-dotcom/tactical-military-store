@@ -3,7 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:tactical_military_store/core/services/supabase_service.dart';
 import 'package:tactical_military_store/models/category.dart';
 import 'package:tactical_military_store/models/product.dart';
+
 import 'package:tactical_military_store/features/home/product_details_page.dart';
+
+import 'widgets/store_search_bar.dart';
+import 'widgets/category_tabs.dart';
+import 'widgets/products_grid.dart';
+import 'widgets/store_filters_sheet.dart';
 
 class StoreHomePage extends StatefulWidget {
   const StoreHomePage({super.key});
@@ -19,113 +25,203 @@ class _StoreHomePageState extends State<StoreHomePage> {
   late Future<List<Product>> _productsFuture;
 
   String _searchText = '';
-
-  /// null = كل الأقسام
   int? _selectedCategoryId;
+
+  int _notificationsCount = 0;
+
+  // ✅ Sort Type
+  ProductSortType _sortType = ProductSortType.newest;
 
   @override
   void initState() {
     super.initState();
+
     _categoriesFuture = _service.getCategories();
     _productsFuture = _service.products.getAllProducts();
+
+    _loadNotificationsCount();
   }
 
-  // ================= FILTER =================
+  Future<void> _loadNotificationsCount() async {
+    final count = await _service.getNotificationsCount();
+    if (!mounted) return;
+
+    setState(() => _notificationsCount = count);
+  }
+
+  // =====================================================
+  // ✅ Filter Products (Search + Category + Sorting)
+  // =====================================================
   List<Product> _filterProducts(List<Product> products) {
     var list = products;
 
+    // Category Filter
     if (_selectedCategoryId != null) {
-      list = list
-          .where((p) => p.categoryId == _selectedCategoryId)
-          .toList();
+      list = list.where((p) => p.categoryId == _selectedCategoryId).toList();
     }
 
+    // Search Filter
     if (_searchText.isNotEmpty) {
       list = list
           .where(
-            (p) =>
-                p.name.toLowerCase().contains(_searchText.toLowerCase()),
+            (p) => p.name.toLowerCase().contains(_searchText.toLowerCase()),
           )
           .toList();
+    }
+
+    // Sorting
+    if (_sortType == ProductSortType.priceLow) {
+      list.sort((a, b) => a.price.compareTo(b.price));
+    } else if (_sortType == ProductSortType.priceHigh) {
+      list.sort((a, b) => b.price.compareTo(a.price));
+    } else if (_sortType == ProductSortType.newest) {
+      list.sort((a, b) => b.id.compareTo(a.id));
     }
 
     return list;
   }
 
-  // ================= UI =================
+  // =====================================================
+  // ✅ UI
+  // =====================================================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF9F9F9),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            // 🔍 SEARCH
-            TextField(
-              decoration: InputDecoration(
-                hintText: "🔍 ابحث عن خوذات، ملابس، معدات...",
-                prefixIcon: const Icon(Icons.search),
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(18),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-              onChanged: (v) => setState(() => _searchText = v),
+            // =====================================================
+            // 🔍 Search Bar + Favorite + Notifications + Filter
+            // =====================================================
+            StoreSearchBar(
+              notificationsCount: _notificationsCount,
+
+              // Search
+              onChanged: (value) {
+                setState(() => _searchText = value);
+              },
+
+              // Notifications
+              onNotificationsTap: () {
+                Navigator.pushNamed(context, "/notifications");
+              },
+
+              // ✅ Favorites Tap (حل الخطأ)
+              onFavoritesTap: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("❤️ صفحة المفضلة قريبًا"),
+                    duration: Duration(seconds: 1),
+                  ),
+                );
+              },
+
+              // Filter Tap
+              onFilterTap: () {
+                showModalBottomSheet(
+                  context: context,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(22),
+                    ),
+                  ),
+                  builder: (_) {
+                    return StoreFiltersSheet(
+                      selectedSort: _sortType,
+                      onApply: (newSort) {
+                        setState(() => _sortType = newSort);
+                      },
+                    );
+                  },
+                );
+              },
             ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
 
-            // 📂 CATEGORIES (تصميم خفيف واحترافي)
+            // =====================================================
+            // 📂 Categories Tabs (تحت البحث مباشرة)
+            // =====================================================
             FutureBuilder<List<Category>>(
               future: _categoriesFuture,
               builder: (context, snapshot) {
                 if (!snapshot.hasData) return const SizedBox();
 
-                final categories = snapshot.data!;
-
-                return SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      _CategoryTextTab(
-                        title: 'الكل',
-                        selected: _selectedCategoryId == null,
-                        onTap: () {
-                          setState(() {
-                            _selectedCategoryId = null;
-                          });
-                        },
-                      ),
-                      ...categories.map((c) {
-                        final categoryId = int.parse(c.id); // ✅ int آمن
-
-                        return _CategoryTextTab(
-                          title: c.name,
-                          selected: _selectedCategoryId == categoryId,
-                          onTap: () {
-                            setState(() {
-                              _selectedCategoryId = categoryId;
-                            });
-                          },
-                        );
-                      }),
-                    ],
-                  ),
+                return CategoryTabs(
+                  categories: snapshot.data!,
+                  selectedCategoryId: _selectedCategoryId,
+                  onSelected: (id) {
+                    setState(() => _selectedCategoryId = id);
+                  },
                 );
               },
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 18),
 
-            // 🛍 PRODUCTS
+            // =====================================================
+            // 🎁 Banner Offers
+            // =====================================================
+            Container(
+              height: 170,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(22),
+                image: const DecorationImage(
+                  fit: BoxFit.cover,
+                  image: NetworkImage(
+                    "https://i.imgur.com/qHhE9xF.jpeg",
+                  ),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
+                    color: Colors.black.withValues(alpha: 0.15),
+                  ),
+                ],
+              ),
+              child: Container(
+                padding: const EdgeInsets.all(18),
+                alignment: Alignment.centerRight,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(22),
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.black.withValues(alpha: 0.55),
+                      Colors.transparent,
+                    ],
+                    begin: Alignment.centerRight,
+                    end: Alignment.centerLeft,
+                  ),
+                ),
+                child: const Text(
+                  "🔥 خصم حتى 30%\nعلى المعدات التكتيكية",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 22),
+
+            // =====================================================
+            // 🛍 Products Grid
+            // =====================================================
             FutureBuilder<List<Product>>(
               future: _productsFuture,
               builder: (context, snapshot) {
                 if (!snapshot.hasData) {
                   return const Center(
-                    child: CircularProgressIndicator(),
+                    child: Padding(
+                      padding: EdgeInsets.all(30),
+                      child: CircularProgressIndicator(),
+                    ),
                   );
                 }
 
@@ -133,134 +229,31 @@ class _StoreHomePageState extends State<StoreHomePage> {
 
                 if (products.isEmpty) {
                   return const Center(
-                    child: Text('لا توجد منتجات'),
+                    child: Padding(
+                      padding: EdgeInsets.all(30),
+                      child: Text(
+                        "🚫 لا توجد منتجات مطابقة",
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
                   );
                 }
 
-                return GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: products.length,
-                  gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                    childAspectRatio: 0.72,
-                  ),
-                  itemBuilder: (context, index) {
-                    final p = products[index];
-
-                    return GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                ProductDetailsPage(product: p),
-                          ),
-                        );
-                      },
-                      child: Card(
-                        elevation: 3,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Column(
-                          children: [
-                            Expanded(
-                              child: ClipRRect(
-                                borderRadius:
-                                    const BorderRadius.vertical(
-                                  top: Radius.circular(16),
-                                ),
-                                child: Image.network(
-                                  p.imageUrl,
-                                  width: double.infinity,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(10),
-                              child: Column(
-                                children: [
-                                  Text(
-                                    p.name,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    "${p.price.toStringAsFixed(0)} YER",
-                                    style: const TextStyle(
-                                      color: Colors.green,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
+                return ProductsGrid(
+                  products: products,
+                  onTap: (product) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ProductDetailsPage(product: product),
                       ),
                     );
                   },
                 );
               },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// =====================================================
-// 🧩 Category Text Tab (بديل احترافي للـ Chip)
-// =====================================================
-class _CategoryTextTab extends StatelessWidget {
-  final String title;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _CategoryTextTab({
-    required this.title,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.only(right: 18),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight:
-                    selected ? FontWeight.bold : FontWeight.normal,
-                color:
-                    selected ? Colors.black : Colors.grey.shade600,
-              ),
-            ),
-            const SizedBox(height: 6),
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              height: 2,
-              width: selected ? 22 : 0,
-              decoration: BoxDecoration(
-                color: selected ? Colors.black : Colors.transparent,
-                borderRadius: BorderRadius.circular(2),
-              ),
             ),
           ],
         ),
