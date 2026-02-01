@@ -1,11 +1,40 @@
+# ================================
+# Netlify Configuration
+# Tactical Military Store
+# tactical729.com
+# ================================
+
 [build]
-  command = """
-    git clone https://github.com/flutter/flutter.git -b stable
-    export PATH="$PATH:`pwd`/flutter/bin"
-    flutter doctor
-    flutter build web --release
-  """
+  command = "flutter build web --release"
   publish = "build/web"
 
+# ================================
+# Environment Settings
+# ================================
 [build.environment]
   FLUTTER_VERSION = "stable"
+
+# ================================
+# Disable Cache (Important)
+# Forces browsers to always load latest version
+# ================================
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+# ================================
+# Correct Content-Type for Sitemap
+# ================================
+[[headers]]
+  for = "/sitemap.xml"
+  [headers.values]
+    Content-Type = "application/xml"
+
+# ================================
+# Correct Content-Type for Robots
+# ================================
+[[headers]]
+  for = "/robots.txt"
+  [headers.values]
+    Content-Type = "text/plain"
