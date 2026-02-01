@@ -22,7 +22,10 @@ class _CreateProductDialogState extends State<CreateProductDialog> {
   final _descriptionController = TextEditingController();
   final _priceController = TextEditingController();
 
+  /// 🖼 جميع صور المنتج (الأولى = رئيسية)
   final List<Uint8List> _images = [];
+
+  /// 📏 المقاسات (اختيارية)
   final List<_VariantRow> _variants = [];
 
   bool _isLoading = false;
@@ -32,6 +35,9 @@ class _CreateProductDialogState extends State<CreateProductDialog> {
     _nameController.dispose();
     _descriptionController.dispose();
     _priceController.dispose();
+    for (final v in _variants) {
+      v.dispose();
+    }
     super.dispose();
   }
 
@@ -58,15 +64,17 @@ class _CreateProductDialogState extends State<CreateProductDialog> {
     setState(() {});
   }
 
-  // ================= SAVE =================
+  // ================= SAVE PRODUCT =================
   Future<void> _saveProduct() async {
     if (_nameController.text.trim().isEmpty ||
         _descriptionController.text.trim().isEmpty ||
         _priceController.text.trim().isEmpty ||
-        _images.isEmpty ||
-        _variants.isEmpty) {
+        _images.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('يرجى إدخال جميع البيانات')),
+        const SnackBar(
+          content:
+              Text('يرجى إدخال جميع البيانات الأساسية وإضافة صورة واحدة على الأقل'),
+        ),
       );
       return;
     }
@@ -82,49 +90,71 @@ class _CreateProductDialogState extends State<CreateProductDialog> {
     setState(() => _isLoading = true);
 
     try {
-      final slug = _generateSlug(_nameController.text);
+      final slug = _generateSlug(_nameController.text.trim());
 
+      // ================= رفع الصورة الرئيسية =================
       final mainImageUrl = await StorageService().uploadProductImage(
         bytes: _images.first,
         fileName: 'product_main_${DateTime.now().millisecondsSinceEpoch}.jpg',
       );
 
-      final productId =
-          await SupabaseService().createProductAndReturnId(
+      // ================= إنشاء المنتج =================
+      final productId = await SupabaseService().createProductAndReturnId(
         name: _nameController.text.trim(),
         slug: slug,
         description: _descriptionController.text.trim(),
         price: price,
-        imageUrl: mainImageUrl,
+        imageUrl: mainImageUrl, // fallback
         categoryId: widget.categoryId,
       );
 
-      for (int i = 1; i < _images.length; i++) {
-        final url = await StorageService().uploadProductImage(
-          bytes: _images[i],
-          fileName:
-              'product_${DateTime.now().millisecondsSinceEpoch}_$i.jpg',
-        );
+      // 🔴 حل المشكلة الأساسية (FK / timing)
+      await Future.delayed(const Duration(milliseconds: 200));
 
-        await SupabaseService().addProductImage(
-          productId: productId,
-          imageUrl: url,
-        );
+      // ================= إضافة كل الصور للـ gallery =================
+      for (int i = 0; i < _images.length; i++) {
+        try {
+          final imageUrl = i == 0
+              ? mainImageUrl
+              : await StorageService().uploadProductImage(
+                  bytes: _images[i],
+                  fileName:
+                      'product_${DateTime.now().millisecondsSinceEpoch}_$i.jpg',
+                );
+
+          await SupabaseService().addProductImage(
+            productId: productId,
+            imageUrl: imageUrl,
+          );
+        } catch (e) {
+          debugPrint('❌ فشل رفع صورة [$i]: $e');
+        }
       }
 
+      // ================= إضافة المقاسات (اختياري) =================
       for (final v in _variants) {
+        final size = v.sizeController.text.trim();
+        final qtyText = v.qtyController.text.trim();
+
+        if (size.isEmpty || qtyText.isEmpty) continue;
+
         await SupabaseService().addProductVariant(
           productId: productId,
-          size: v.sizeController.text.trim(),
-          quantity: int.parse(v.qtyController.text),
+          size: size,
+          quantity: int.parse(qtyText),
         );
       }
 
       if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('✅ تم إنشاء المنتج بنجاح')),
+      );
+
       Navigator.pop(context, true);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('فشل إنشاء المنتج: $e')),
+        SnackBar(content: Text('❌ فشل إنشاء المنتج: $e')),
       );
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -134,9 +164,6 @@ class _CreateProductDialogState extends State<CreateProductDialog> {
   // ================= UI =================
   @override
   Widget build(BuildContext context) {
-    final isArabic =
-        Localizations.localeOf(context).languageCode == 'ar';
-
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Padding(
@@ -144,45 +171,35 @@ class _CreateProductDialogState extends State<CreateProductDialog> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              Text(
-                isArabic ? 'إضافة منتج' : 'Add Product',
-                style:
-                    const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              const Text(
+                'إضافة منتج جديد',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
 
               const SizedBox(height: 16),
 
               TextField(
                 controller: _nameController,
-                decoration: InputDecoration(
-                  labelText: isArabic ? 'اسم المنتج' : 'Product Name',
-                ),
+                decoration: const InputDecoration(labelText: 'اسم المنتج'),
               ),
 
               const SizedBox(height: 8),
 
               TextField(
                 controller: _descriptionController,
-                decoration: InputDecoration(
-                  labelText: isArabic ? 'الوصف' : 'Description',
-                ),
+                decoration: const InputDecoration(labelText: 'الوصف'),
               ),
 
               const SizedBox(height: 8),
 
-              // ================= PRICE =================
               TextField(
                 controller: _priceController,
-                decoration: InputDecoration(
-                  labelText: isArabic ? 'السعر' : 'Price',
-                  hintText:
-                      isArabic ? 'مثال: 12000' : 'Example: 12000',
-                  suffixText: isArabic ? 'ريال' : 'YER',
+                decoration: const InputDecoration(
+                  labelText: 'السعر',
+                  suffixText: 'ريال',
                 ),
                 keyboardType: TextInputType.number,
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                ],
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               ),
 
               const SizedBox(height: 16),
@@ -192,8 +209,7 @@ class _CreateProductDialogState extends State<CreateProductDialog> {
                 child: TextButton.icon(
                   onPressed: _pickImages,
                   icon: const Icon(Icons.image),
-                  label:
-                      Text(isArabic ? 'اختيار الصور' : 'Select Images'),
+                  label: const Text('اختيار الصور'),
                 ),
               ),
 
@@ -232,12 +248,9 @@ class _CreateProductDialogState extends State<CreateProductDialog> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    isArabic
-                        ? 'المقاسات والكميات'
-                        : 'Sizes & Quantities',
-                    style:
-                        const TextStyle(fontWeight: FontWeight.bold),
+                  const Text(
+                    'المقاسات والكميات (اختياري)',
+                    style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                   TextButton.icon(
                     onPressed: () {
@@ -245,8 +258,7 @@ class _CreateProductDialogState extends State<CreateProductDialog> {
                       setState(() {});
                     },
                     icon: const Icon(Icons.add),
-                    label:
-                        Text(isArabic ? 'إضافة مقاس' : 'Add Size'),
+                    label: const Text('إضافة مقاس'),
                   ),
                 ],
               ),
@@ -258,28 +270,25 @@ class _CreateProductDialogState extends State<CreateProductDialog> {
                     Expanded(
                       child: TextField(
                         controller: v.sizeController,
-                        decoration: InputDecoration(
-                          labelText: isArabic ? 'المقاس' : 'Size',
-                        ),
+                        decoration:
+                            const InputDecoration(labelText: 'المقاس'),
                       ),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: TextField(
                         controller: v.qtyController,
-                        decoration: InputDecoration(
-                          labelText:
-                              isArabic ? 'الكمية' : 'Quantity',
-                        ),
+                        decoration:
+                            const InputDecoration(labelText: 'الكمية'),
                         keyboardType: TextInputType.number,
                         inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
+                          FilteringTextInputFormatter.digitsOnly
                         ],
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.delete,
-                          color: Colors.red),
+                      icon:
+                          const Icon(Icons.delete, color: Colors.red),
                       onPressed: () {
                         _variants.removeAt(index);
                         setState(() {});
@@ -291,11 +300,14 @@ class _CreateProductDialogState extends State<CreateProductDialog> {
 
               const SizedBox(height: 24),
 
-              ElevatedButton(
-                onPressed: _isLoading ? null : _saveProduct,
-                child: _isLoading
-                    ? const CircularProgressIndicator()
-                    : Text(isArabic ? 'حفظ' : 'Save'),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : _saveProduct,
+                  child: _isLoading
+                      ? const CircularProgressIndicator()
+                      : const Text('حفظ المنتج'),
+                ),
               ),
             ],
           ),
@@ -307,8 +319,11 @@ class _CreateProductDialogState extends State<CreateProductDialog> {
 
 // ================= VARIANT HELPER =================
 class _VariantRow {
-  final TextEditingController sizeController =
-      TextEditingController();
-  final TextEditingController qtyController =
-      TextEditingController();
+  final TextEditingController sizeController = TextEditingController();
+  final TextEditingController qtyController = TextEditingController();
+
+  void dispose() {
+    sizeController.dispose();
+    qtyController.dispose();
+  }
 }

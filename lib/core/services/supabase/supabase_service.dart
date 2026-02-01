@@ -1,24 +1,20 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-// ✅ Models Imports
+// ✅ Models
 import 'package:tactical_military_store/models/app_user.dart';
 import 'package:tactical_military_store/models/category.dart';
 import 'package:tactical_military_store/models/product.dart';
 import 'package:tactical_military_store/models/product_image.dart';
 import 'package:tactical_military_store/models/product_variant.dart';
 import 'package:tactical_military_store/models/product_review.dart';
-
-// ✅ Notification Model
 import 'package:tactical_military_store/models/app_notification.dart';
 
-// ✅ Services Imports
+// ✅ Services
 import 'supabase_auth_service.dart';
 import 'supabase_category_service.dart';
 import 'supabase_product_service.dart';
 import 'supabase_order_service.dart';
 import 'supabase_review_contest_service.dart';
-
-// ✅ Notifications Service Import
 import 'package:tactical_military_store/core/services/supabase/supabase_notification_service.dart';
 
 class SupabaseService {
@@ -26,14 +22,14 @@ class SupabaseService {
   factory SupabaseService() => _instance;
   SupabaseService._internal();
 
-  // ✅ Sub Services
+  // =====================================================
+  // 🔌 Sub Services
+  // =====================================================
   final auth = SupabaseAuthService();
   final categories = SupabaseCategoryService();
   final products = SupabaseProductService();
   final orders = SupabaseOrderService();
   final reviews = SupabaseReviewContestService();
-
-  // ✅ Notifications Service
   final notifications = SupabaseNotificationService();
 
   // =====================================================
@@ -104,7 +100,7 @@ class SupabaseService {
   Future<void> deleteCategory(int id) => categories.deleteCategory(id);
 
   // =====================================================
-  // 📦 PRODUCTS
+  // 📦 PRODUCTS (FULL ADMIN SUPPORT)
   // =====================================================
 
   Future<int> createProductAndReturnId({
@@ -118,35 +114,77 @@ class SupabaseService {
       products.createProductAndReturnId(
         name: name,
         slug: slug,
-       description: description,
+        description: description,
         price: price,
         imageUrl: imageUrl,
         categoryId: categoryId,
       );
 
+  /// 🛍 جميع المنتجات (Store + Super Admin)
+  Future<List<Product>> getAllProducts() =>
+      products.getAllProducts();
+
   Future<List<Product>> getProductsByCategory(int categoryId) =>
       products.getProductsByCategory(categoryId);
+
+  // =====================================================
+  // ✏️ UPDATE PRODUCT
+  // =====================================================
+
+  Future<void> updateProduct({
+    required int productId,
+    required String name,
+    required String slug,
+    required String description,
+    required double price,
+    required String imageUrl,
+    required int categoryId,
+  }) =>
+      products.updateProduct(
+        productId: productId,
+        name: name,
+        slug: slug,
+        description: description,
+        price: price,
+        imageUrl: imageUrl,
+        categoryId: categoryId,
+      );
+
+  // =====================================================
+  // 🗑 DELETE PRODUCT (مع الصور والمقاسات)
+  // =====================================================
+
+  Future<void> deleteProduct(int productId) =>
+      products.deleteProduct(productId);
+
+  // =====================================================
+  // 🖼 PRODUCT IMAGES
+  // =====================================================
 
   Future<void> addProductImage({
     required int productId,
     required String imageUrl,
   }) =>
-      products.addProductImage(productId: productId, imageUrl: imageUrl);
+      products.addProductImage(
+        productId: productId,
+        imageUrl: imageUrl,
+      );
 
-  /// ✅ الصور الأصلية كموديلات
   Future<List<ProductImage>> getProductImages(int productId) =>
       products.getProductImages(productId);
 
-  // =====================================================
-  // ✅ Product Images URLs (For Swipe Slider)
-  // =====================================================
+  Future<void> deleteProductImage(int imageId) =>
+      products.deleteProductImage(imageId);
 
-  /// 🔥 هذه الدالة ترجع فقط روابط الصور كـ `List<String>`
-  /// لكي تعمل داخل StoreProductCard بدون كسر أي شيء قديم
+  /// 🔥 فقط روابط الصور (للسلايدر)
   Future<List<String>> getProductImagesUrls(int productId) async {
     final images = await products.getProductImages(productId);
-    return images.map((img) => img.imageUrl).toList();
+    return List<String>.from(images.map((e) => e.imageUrl));
   }
+
+  // =====================================================
+  // 📏 PRODUCT VARIANTS
+  // =====================================================
 
   Future<void> addProductVariant({
     required int productId,
@@ -161,6 +199,9 @@ class SupabaseService {
 
   Future<List<ProductVariant>> getProductVariants(int productId) =>
       products.getProductVariants(productId);
+
+  Future<void> deleteProductVariant(int variantId) =>
+      products.deleteProductVariant(variantId);
 
   // =====================================================
   // 🧾 ORDERS
@@ -187,7 +228,8 @@ class SupabaseService {
         phone: phone,
       );
 
-  Future<List<Map<String, dynamic>>> getAllOrders() => orders.getAllOrders();
+  Future<List<Map<String, dynamic>>> getAllOrders() =>
+      orders.getAllOrders();
 
   Future<List<Map<String, dynamic>>> getUserOrdersByAuthId({
     required String authId,
@@ -201,7 +243,7 @@ class SupabaseService {
       orders.updateOrderStatus(orderId: orderId, status: status);
 
   // =====================================================
-  // ⭐ PRODUCT REVIEWS
+  // ⭐ REVIEWS
   // =====================================================
 
   Future<List<ProductReview>> getProductReviews(int productId) =>
@@ -225,7 +267,8 @@ class SupabaseService {
   // 🎯 CONTESTS
   // =====================================================
 
-  Future<List<Map<String, dynamic>>> getContests() => reviews.getContests();
+  Future<List<Map<String, dynamic>>> getContests() =>
+      reviews.getContests();
 
   Future<void> createContest({
     required String title,
@@ -262,10 +305,6 @@ class SupabaseService {
         title: title,
         body: body,
       );
-
-  // =====================================================
-  // ✅ Notifications Count (Badge Number)
-  // =====================================================
 
   Future<int> getNotificationsCount() async {
     final list = await notifications.getNotifications();

@@ -21,18 +21,28 @@ class _SuperAdminShellState extends State<SuperAdminShell> {
   int _index = 0;
 
   // =====================================================
-  // ✅ Pages (Store + Orders + Profile + Settings + Admin)
+  // ✅ Pages
   // =====================================================
   late final List<Widget> _pages = [
-    const HomePage(),
-    const OrdersPage(),
-    const ProfilePage(),
-    const SettingsPage(),
-    const SuperAdminDashboardPage(),
+    const HomePage(),                // 🛍 المتجر (نفس المستخدم)
+    const OrdersPage(),              // 📦 الطلبات
+    const ProfilePage(),             // 👤 الحساب
+    const SettingsPage(),            // ⚙️ الإعدادات
+    const SuperAdminDashboardPage(), // 👑 لوحة التحكم
   ];
 
   // =====================================================
-  // ✅ Logout
+  // 🏷 Dynamic AppBar Title
+  // =====================================================
+  String get _title {
+    if (_index == 4) {
+      return "👑 لوحة تحكم السوبر أدمن";
+    }
+    return "🛍 Tactical Military Store";
+  }
+
+  // =====================================================
+  // 🚪 Logout
   // =====================================================
   Future<void> _logout() async {
     await SupabaseService().signOut();
@@ -54,16 +64,16 @@ class _SuperAdminShellState extends State<SuperAdminShell> {
     return Scaffold(
       backgroundColor: const Color(0xFF0B0F14),
 
-      // ✅ Tactical AppBar
+      // ✅ Tactical AppBar (ذكي)
       appBar: AppBar(
         elevation: 6,
         backgroundColor: Colors.black,
-        title: const Text(
-          "👑 Super Admin Panel",
-          style: TextStyle(
+        title: Text(
+          _title,
+          style: const TextStyle(
             fontWeight: FontWeight.bold,
             color: Colors.greenAccent,
-            letterSpacing: 1.2,
+            letterSpacing: 1.1,
           ),
         ),
         centerTitle: true,
@@ -76,19 +86,13 @@ class _SuperAdminShellState extends State<SuperAdminShell> {
         ],
       ),
 
-      // ✅ Smooth Page Switch Animation
+      // ✅ Smooth Page Switch
       body: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 350),
-        transitionBuilder: (child, animation) {
-          return FadeTransition(
-            opacity: animation,
-            child: child,
-          );
-        },
+        duration: const Duration(milliseconds: 300),
         child: _pages[_index],
       ),
 
-      // ✅ Tactical Bottom Navigation
+      // ✅ Bottom Navigation (موحّد)
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: Colors.black,

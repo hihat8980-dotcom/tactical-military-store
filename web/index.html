@@ -1,38 +1,92 @@
 <!DOCTYPE html>
-<html>
+<html lang="ar">
 <head>
-  <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
 
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
-
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
-  -->
+  <!-- Base -->
   <base href="$FLUTTER_BASE_HREF">
 
+  <!-- Charset -->
   <meta charset="UTF-8">
-  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge">
 
-  <!-- iOS meta tags & icons -->
+  <!-- Viewport -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Title (Arabic + English) -->
+  <title>متجر Tactical 729 | أكبر متجر تكتيكي في اليمن</title>
+
+  <!-- SEO Description (Strong Tactical Description Arabic + English) -->
+  <meta name="description"
+        content="متجر Tactical 729 هو أكبر متجر تكتيكي في اليمن، يوفر كل ما تحتاجه من المعدات والتجهيزات التكتيكية والعسكرية: بدلات تكتيكية، جواكت ميدانية، نظارات حماية، درابيل ومناظير، جيوب وحقائب قتالية، إكسسوارات وتجهيزات خارجية بجودة عالية وشحن سريع داخل اليمن وخارجها. | Tactical 729 Store is the largest tactical store in Yemen, offering everything you need in military and tactical gear: tactical uniforms, field jackets, protective eyewear, binoculars and scopes, combat pouches and bags, outdoor equipment, and premium supplies with fast delivery in Yemen and worldwide.">
+
+  <!-- Keywords -->
+  <meta name="keywords"
+        content="Tactical 729, أكبر متجر تكتيكي في اليمن, متجر تكتيكي, معدات عسكرية, تجهيزات تكتيكية, بدلات تكتيكية, جواكت عسكرية, نظارات تكتيكية, درابيل ومناظير, جيوب قتالية, tactical gear Yemen, military store Yemen">
+
+  <!-- Author -->
+  <meta name="author" content="Tactical 729 Store">
+
+  <!-- Canonical -->
+  <link rel="canonical" href="https://tactical729.com/">
+
+  <!-- Robots -->
+  <meta name="robots" content="index, follow">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="متجر Tactical 729 | أكبر متجر تكتيكي في اليمن">
+  <meta property="og:description"
+        content="أكبر متجر تكتيكي في اليمن يوفر بدلات، جواكت، نظارات، درابيل، جيوب وتجهيزات عسكرية وتكتيكية أصلية بجودة عالية وشحن سريع.">
+  <meta property="og:url" content="https://tactical729.com/">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://tactical729.com/icons/Icon-512.png">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="متجر Tactical 729 | أكبر متجر تكتيكي في اليمن">
+  <meta name="twitter:description"
+        content="تسوق أفضل المعدات التكتيكية والعسكرية في اليمن: بدلات، جواكت، نظارات، درابيل، جيوب وتجهيزات أصلية مع شحن سريع.">
+  <meta name="twitter:image" content="https://tactical729.com/icons/Icon-512.png">
+
+  <!-- iOS + PWA -->
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="tactical_military_store">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <!-- App Name -->
+  <meta name="apple-mobile-web-app-title" content="Tactical 729 | متجر تكتيكي">
+
+  <!-- Apple Icon -->
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
-  <link rel="icon" type="image/png" href="favicon.png"/>
+  <link rel="icon" type="image/png" href="favicon.png">
 
-  <title>tactical_military_store</title>
+  <!-- Manifest -->
   <link rel="manifest" href="manifest.json">
+
+  <!-- Theme Color -->
+  <meta name="theme-color" content="#0A0F14">
+
+  <!-- Sitemap -->
+  <link rel="sitemap" type="application/xml" href="https://tactical729.com/sitemap.xml">
+
+  <!-- Disable Old Service Worker Cache -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        for (let registration of registrations) {
+          registration.unregister();
+        }
+      });
+    }
+  </script>
+
 </head>
+
 <body>
+
+  <!-- Flutter Bootstrap -->
   <script src="flutter_bootstrap.js" async></script>
+
 </body>
 </html>

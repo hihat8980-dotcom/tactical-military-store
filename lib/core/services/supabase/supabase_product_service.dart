@@ -7,7 +7,7 @@ class SupabaseProductService {
   final _supabase = SupabaseClientService.client;
 
   // =====================================================
-  // ✅ إنشاء منتج وإرجاع ID
+  // ✅ CREATE PRODUCT
   // =====================================================
   Future<int> createProductAndReturnId({
     required String name,
@@ -34,7 +34,61 @@ class SupabaseProductService {
   }
 
   // =====================================================
-  // ✅ جلب المنتجات حسب القسم
+  // ✏️ UPDATE PRODUCT (Super Admin)
+  // =====================================================
+  Future<void> updateProduct({
+    required int productId,
+    required String name,
+    required String slug,
+    required String description,
+    required double price,
+    required String imageUrl,
+    required int categoryId,
+  }) async {
+    await _supabase.from('products').update({
+      'name': name,
+      'slug': slug,
+      'description': description,
+      'price': price,
+      'image_url': imageUrl,
+      'category_id': categoryId,
+    }).eq('id', productId);
+  }
+
+  // =====================================================
+  // 🗑 DELETE PRODUCT (Product + Images + Variants)
+  // =====================================================
+  Future<void> deleteProduct(int productId) async {
+    await _supabase
+        .from('product_images')
+        .delete()
+        .eq('product_id', productId);
+
+    await _supabase
+        .from('product_variants')
+        .delete()
+        .eq('product_id', productId);
+
+    await _supabase
+        .from('products')
+        .delete()
+        .eq('id', productId);
+  }
+
+  // =====================================================
+  // 🛍 GET ALL PRODUCTS
+  // =====================================================
+  Future<List<Product>> getAllProducts() async {
+    final res = await _supabase
+        .from('products')
+        .select()
+        .order('created_at', ascending: false);
+
+    return (res as List).map((e) => Product.fromMap(e)).toList();
+  }
+
+  // =====================================================
+  // 🗂 GET PRODUCTS BY CATEGORY
   // =====================================================
   Future<List<Product>> getProductsByCategory(int categoryId) async {
     final res = await _supabase
@@ -47,19 +101,7 @@ class SupabaseProductService {
   }
 
   // =====================================================
-  // 🛍️ جلب جميع المنتجات (Store Home Page)
-  // =====================================================
-  Future<List<Product>> getAllProducts() async {
-    final res = await _supabase
-        .from('products')
-        .select()
-        .order('created_at', ascending: false);
-
-    return (res as List).map((e) => Product.fromMap(e)).toList();
-  }
-
-  // =====================================================
-  // ✅ إضافة صورة إضافية للمنتج
+  // 🖼 PRODUCT IMAGES
   // =====================================================
   Future<void> addProductImage({
     required int productId,
@@ -71,9 +113,6 @@ class SupabaseProductService {
     });
   }
 
-  // =====================================================
-  // ✅ جلب صور المنتج
-  // =====================================================
   Future<List<ProductImage>> getProductImages(int productId) async {
     final res = await _supabase
         .from('product_images')
@@ -84,8 +123,15 @@ class SupabaseProductService {
     return (res as List).map((e) => ProductImage.fromMap(e)).toList();
   }
 
+  Future<void> deleteProductImage(int imageId) async {
+    await _supabase
+        .from('product_images')
+        .delete()
+        .eq('id', imageId);
+  }
+
   // =====================================================
-  // ✅ إضافة مقاس + كمية للمنتج
+  // 📏 PRODUCT VARIANTS (اختيارية)
   // =====================================================
   Future<void> addProductVariant({
     required int productId,
@@ -99,9 +145,6 @@ class SupabaseProductService {
     });
   }
 
-  // =====================================================
-  // ✅ جلب المقاسات والكميات للمنتج
-  // =====================================================
   Future<List<ProductVariant>> getProductVariants(int productId) async {
     final res = await _supabase
         .from('product_variants')
@@ -110,5 +153,12 @@ class SupabaseProductService {
         .order('created_at');
 
     return (res as List).map((e) => ProductVariant.fromMap(e)).toList();
+  }
+
+  Future<void> deleteProductVariant(int variantId) async {
+    await _supabase
+        .from('product_variants')
+        .delete()
+        .eq('id', variantId);
   }
 }
