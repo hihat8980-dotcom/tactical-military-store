@@ -6,6 +6,7 @@ import 'package:tactical_military_store/core/services/storage_service.dart';
 import 'package:tactical_military_store/core/services/supabase_service.dart';
 
 class CreateProductDialog extends StatefulWidget {
+  /// ✅ القسم الذي سيُضاف فيه المنتج
   final int categoryId;
 
   const CreateProductDialog({
@@ -22,10 +23,10 @@ class _CreateProductDialogState extends State<CreateProductDialog> {
   final _descriptionController = TextEditingController();
   final _priceController = TextEditingController();
 
-  /// 🖼 جميع صور المنتج (الأولى = رئيسية)
+  /// 🖼 صور المنتج (الأولى = رئيسية)
   final List<Uint8List> _images = [];
 
-  /// 📏 المقاسات (اختيارية)
+  /// 📏 المقاسات (اختياري)
   final List<_VariantRow> _variants = [];
 
   bool _isLoading = false;
@@ -104,12 +105,9 @@ class _CreateProductDialogState extends State<CreateProductDialog> {
         slug: slug,
         description: _descriptionController.text.trim(),
         price: price,
-        imageUrl: mainImageUrl, // fallback
-        categoryId: widget.categoryId,
+        imageUrl: mainImageUrl,
+        categoryId: widget.categoryId, // ✅ القسم الصحيح
       );
-
-      // 🔴 حل المشكلة الأساسية (FK / timing)
-      await Future.delayed(const Duration(milliseconds: 200));
 
       // ================= إضافة كل الصور للـ gallery =================
       for (int i = 0; i < _images.length; i++) {
@@ -196,7 +194,7 @@ class _CreateProductDialogState extends State<CreateProductDialog> {
                 controller: _priceController,
                 decoration: const InputDecoration(
                   labelText: 'السعر',
-                  suffixText: 'ريال',
+                  suffixText: 'YER',
                 ),
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -287,8 +285,7 @@ class _CreateProductDialogState extends State<CreateProductDialog> {
                       ),
                     ),
                     IconButton(
-                      icon:
-                          const Icon(Icons.delete, color: Colors.red),
+                      icon: const Icon(Icons.delete, color: Colors.red),
                       onPressed: () {
                         _variants.removeAt(index);
                         setState(() {});

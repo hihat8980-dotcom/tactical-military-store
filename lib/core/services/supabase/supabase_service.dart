@@ -1,6 +1,7 @@
+import 'dart:typed_data';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-// ✅ Models
+// ================= MODELS =================
 import 'package:tactical_military_store/models/app_user.dart';
 import 'package:tactical_military_store/models/category.dart';
 import 'package:tactical_military_store/models/product.dart';
@@ -8,14 +9,17 @@ import 'package:tactical_military_store/models/product_image.dart';
 import 'package:tactical_military_store/models/product_variant.dart';
 import 'package:tactical_military_store/models/product_review.dart';
 import 'package:tactical_military_store/models/app_notification.dart';
+import 'package:tactical_military_store/models/store_offer.dart';
 
-// ✅ Services
+// ================= SERVICES =================
 import 'supabase_auth_service.dart';
 import 'supabase_category_service.dart';
 import 'supabase_product_service.dart';
 import 'supabase_order_service.dart';
 import 'supabase_review_contest_service.dart';
+
 import 'package:tactical_military_store/core/services/supabase/supabase_notification_service.dart';
+import 'package:tactical_military_store/core/services/supabase/supabase_offer_service.dart';
 
 class SupabaseService {
   static final SupabaseService _instance = SupabaseService._internal();
@@ -23,7 +27,7 @@ class SupabaseService {
   SupabaseService._internal();
 
   // =====================================================
-  // 🔌 Sub Services
+  // 🔌 SUB SERVICES
   // =====================================================
   final auth = SupabaseAuthService();
   final categories = SupabaseCategoryService();
@@ -31,6 +35,9 @@ class SupabaseService {
   final orders = SupabaseOrderService();
   final reviews = SupabaseReviewContestService();
   final notifications = SupabaseNotificationService();
+
+  // ✅ Offers Service
+  final offers = SupabaseOfferService();
 
   // =====================================================
   // 🔐 AUTH
@@ -46,7 +53,7 @@ class SupabaseService {
     required String email,
     required String password,
     required String nickname,
-    String role = 'user',
+    String role = "user",
   }) =>
       auth.signUp(
         email: email,
@@ -91,16 +98,16 @@ class SupabaseService {
       categories.createCategory(name: name, imageUrl: imageUrl);
 
   Future<void> updateCategory({
-    required int id,
+    required String id,
     required String name,
     required String imageUrl,
   }) =>
       categories.updateCategory(id: id, name: name, imageUrl: imageUrl);
 
-  Future<void> deleteCategory(int id) => categories.deleteCategory(id);
+  Future<void> deleteCategory(String id) => categories.deleteCategory(id);
 
   // =====================================================
-  // 📦 PRODUCTS (FULL ADMIN SUPPORT)
+  // 📦 PRODUCTS
   // =====================================================
 
   Future<int> createProductAndReturnId({
@@ -120,16 +127,10 @@ class SupabaseService {
         categoryId: categoryId,
       );
 
-  /// 🛍 جميع المنتجات (Store + Super Admin)
-  Future<List<Product>> getAllProducts() =>
-      products.getAllProducts();
+  Future<List<Product>> getAllProducts() => products.getAllProducts();
 
   Future<List<Product>> getProductsByCategory(int categoryId) =>
       products.getProductsByCategory(categoryId);
-
-  // =====================================================
-  // ✏️ UPDATE PRODUCT
-  // =====================================================
 
   Future<void> updateProduct({
     required int productId,
@@ -150,10 +151,6 @@ class SupabaseService {
         categoryId: categoryId,
       );
 
-  // =====================================================
-  // 🗑 DELETE PRODUCT (مع الصور والمقاسات)
-  // =====================================================
-
   Future<void> deleteProduct(int productId) =>
       products.deleteProduct(productId);
 
@@ -165,10 +162,7 @@ class SupabaseService {
     required int productId,
     required String imageUrl,
   }) =>
-      products.addProductImage(
-        productId: productId,
-        imageUrl: imageUrl,
-      );
+      products.addProductImage(productId: productId, imageUrl: imageUrl);
 
   Future<List<ProductImage>> getProductImages(int productId) =>
       products.getProductImages(productId);
@@ -176,7 +170,6 @@ class SupabaseService {
   Future<void> deleteProductImage(int imageId) =>
       products.deleteProductImage(imageId);
 
-  /// 🔥 فقط روابط الصور (للسلايدر)
   Future<List<String>> getProductImagesUrls(int productId) async {
     final images = await products.getProductImages(productId);
     return List<String>.from(images.map((e) => e.imageUrl));
@@ -301,13 +294,52 @@ class SupabaseService {
     required String title,
     required String body,
   }) =>
-      notifications.sendNotification(
-        title: title,
-        body: body,
-      );
+      notifications.sendNotification(title: title, body: body);
 
   Future<int> getNotificationsCount() async {
     final list = await notifications.getNotifications();
     return list.length;
+  }
+
+  // =====================================================
+  // 🎁 OFFERS SYSTEM (Banner Offers)
+  // =====================================================
+
+  Future<StoreOffer?> getActiveOffer() => offers.getActiveOffer();
+
+  Future<List<StoreOffer>> getAllOffers() => offers.getAllOffers();
+
+  Future<void> createOffer({
+    required String title,
+    required String imageUrl,
+  }) =>
+      offers.createOffer(title: title, imageUrl: imageUrl);
+
+  Future<void> disableOffer(int id) => offers.disableOffer(id);
+
+  // =====================================================
+  // ✅ Upload Offer Image To Supabase Storage (FINAL FIX ✅)
+  // =====================================================
+
+  Future<String> uploadOfferImage({
+    required String fileName,
+    required Uint8List bytes,
+  }) async {
+    const bucketName = "offers";
+
+    final path = "banners/$fileName";
+
+    await Supabase.instance.client.storage.from(bucketName).uploadBinary(
+          path,
+          bytes,
+          fileOptions: const FileOptions(
+            upsert: true,
+            contentType: "image/png",
+          ),
+        );
+
+    return Supabase.instance.client.storage
+        .from(bucketName)
+        .getPublicUrl(path);
   }
 }

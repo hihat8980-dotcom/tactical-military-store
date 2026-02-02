@@ -5,10 +5,15 @@ import 'package:tactical_military_store/features/super_admin/categories/categori
 import 'package:tactical_military_store/features/super_admin/orders/orders_page.dart';
 import 'package:tactical_military_store/features/super_admin/contests/contests_dashboard_page.dart';
 
-// ✅ المسار الجديد الصحيح للإشعارات
+// ✅ الإشعارات
 import 'package:tactical_military_store/features/notifications/super_admin_notifications_page.dart';
 
-import 'package:tactical_military_store/features/home/home_page.dart';
+// ✅ إدارة المنتجات
+import 'package:tactical_military_store/features/super_admin/products/super_admin_products_page.dart';
+
+// ✅ الخصومات (الجديد)
+import 'package:tactical_military_store/features/super_admin/discounts/super_admin_discounts_page.dart';
+
 import 'package:tactical_military_store/core/theme/military_theme.dart';
 
 class SuperAdminDashboardPage extends StatelessWidget {
@@ -38,6 +43,7 @@ class SuperAdminDashboardPage extends StatelessWidget {
           crossAxisSpacing: 18,
           childAspectRatio: 1.05,
           children: [
+            // 👤 المستخدمون
             _DashboardCard(
               icon: Icons.people_alt_rounded,
               title: "المستخدمون",
@@ -52,6 +58,7 @@ class SuperAdminDashboardPage extends StatelessWidget {
               },
             ),
 
+            // 🗂 الأقسام
             _DashboardCard(
               icon: Icons.category_rounded,
               title: "الأقسام",
@@ -66,20 +73,37 @@ class SuperAdminDashboardPage extends StatelessWidget {
               },
             ),
 
+            // 📦 المنتجات
             _DashboardCard(
-              icon: Icons.storefront_rounded,
-              title: "المتجر",
-              subtitle: "عرض المنتجات والأقسام",
+              icon: Icons.inventory_2_rounded,
+              title: "المنتجات",
+              subtitle: "إضافة / تعديل / حذف",
               onTap: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => const HomePage(),
+                    builder: (_) => const SuperAdminProductsPage(),
                   ),
                 );
               },
             ),
 
+            // 💸 الخصومات (الجديد)
+            _DashboardCard(
+              icon: Icons.local_offer_rounded,
+              title: "الخصومات",
+              subtitle: "إدارة العروض والتخفيضات",
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const SuperAdminDiscountsPage(),
+                  ),
+                );
+              },
+            ),
+
+            // 📦 الطلبات
             _DashboardCard(
               icon: Icons.shopping_cart_checkout_rounded,
               title: "الطلبات",
@@ -94,6 +118,7 @@ class SuperAdminDashboardPage extends StatelessWidget {
               },
             ),
 
+            // 🎯 المسابقات
             _DashboardCard(
               icon: Icons.emoji_events_rounded,
               title: "المسابقات",
@@ -108,7 +133,7 @@ class SuperAdminDashboardPage extends StatelessWidget {
               },
             ),
 
-            // ✅ زر الإشعارات الجديد (بعد تعديل const)
+            // 🔔 الإشعارات
             _DashboardCard(
               icon: Icons.notifications_active_rounded,
               title: "الإشعارات",
@@ -130,7 +155,7 @@ class SuperAdminDashboardPage extends StatelessWidget {
 }
 
 // =====================================================
-// 🧱 Dashboard Card سكري رسمي
+// 🧱 Dashboard Card (Reusable)
 // =====================================================
 class _DashboardCard extends StatelessWidget {
   final IconData icon;
@@ -167,7 +192,6 @@ class _DashboardCard extends StatelessWidget {
             ),
           ],
         ),
-
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -180,9 +204,7 @@ class _DashboardCard extends StatelessWidget {
                 color: MilitaryTheme.accent,
               ),
             ),
-
             const Spacer(),
-
             Text(
               title,
               maxLines: 1,
@@ -193,9 +215,7 @@ class _DashboardCard extends StatelessWidget {
                 color: Colors.white,
               ),
             ),
-
             const SizedBox(height: 6),
-
             Text(
               subtitle,
               maxLines: 1,

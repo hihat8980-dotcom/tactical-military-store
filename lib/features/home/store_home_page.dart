@@ -11,6 +11,9 @@ import 'widgets/category_tabs.dart';
 import 'widgets/products_grid.dart';
 import 'widgets/store_filters_sheet.dart';
 
+/// ✅ NEW: Banner Offers Widget
+import 'widgets/store_offers_banner.dart';
+
 class StoreHomePage extends StatefulWidget {
   const StoreHomePage({super.key});
 
@@ -108,7 +111,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
                 Navigator.pushNamed(context, "/notifications");
               },
 
-              // ✅ Favorites Tap (حل الخطأ)
+              // Favorites Tap
               onFavoritesTap: () {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
@@ -142,7 +145,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
             const SizedBox(height: 14),
 
             // =====================================================
-            // 📂 Categories Tabs (تحت البحث مباشرة)
+            // 📂 Categories Tabs
             // =====================================================
             FutureBuilder<List<Category>>(
               future: _categoriesFuture,
@@ -162,51 +165,9 @@ class _StoreHomePageState extends State<StoreHomePage> {
             const SizedBox(height: 18),
 
             // =====================================================
-            // 🎁 Banner Offers
+            // 🎁 Banner Offers From Supabase (Dynamic)
             // =====================================================
-            Container(
-              height: 170,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(22),
-                image: const DecorationImage(
-                  fit: BoxFit.cover,
-                  image: NetworkImage(
-                    "https://i.imgur.com/qHhE9xF.jpeg",
-                  ),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    blurRadius: 10,
-                    offset: const Offset(0, 5),
-                    color: Colors.black.withValues(alpha: 0.15),
-                  ),
-                ],
-              ),
-              child: Container(
-                padding: const EdgeInsets.all(18),
-                alignment: Alignment.centerRight,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(22),
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.black.withValues(alpha: 0.55),
-                      Colors.transparent,
-                    ],
-                    begin: Alignment.centerRight,
-                    end: Alignment.centerLeft,
-                  ),
-                ),
-                child: const Text(
-                  "🔥 خصم حتى 30%\nعلى المعدات التكتيكية",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    height: 1.4,
-                  ),
-                ),
-              ),
-            ),
+            const StoreOffersBanner(),
 
             const SizedBox(height: 22),
 
@@ -248,7 +209,8 @@ class _StoreHomePageState extends State<StoreHomePage> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => ProductDetailsPage(product: product),
+                        builder: (_) =>
+                            ProductDetailsPage(product: product),
                       ),
                     );
                   },

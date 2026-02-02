@@ -8,7 +8,6 @@ import 'package:tactical_military_store/models/app_user.dart';
 
 import 'package:tactical_military_store/features/cart/cart_provider.dart';
 import 'package:tactical_military_store/features/super_admin/products/create_product_dialog.dart';
-import 'package:tactical_military_store/features/home/product_details_page.dart';
 
 class CategoryProductsPage extends StatefulWidget {
   final Category category;
@@ -49,17 +48,43 @@ class _CategoryProductsPageState extends State<CategoryProductsPage> {
     });
   }
 
-  bool get _canShowAddProductButton {
+  bool get _isAdmin {
     if (!_permissionsLoaded || _currentUser == null) return false;
-    if (_currentUser!.isSuperAdmin) return true;
-    if (_currentUser!.isAdmin && _currentUser!.canAddProducts) return true;
-    return false;
+    return _currentUser!.isSuperAdmin ||
+        (_currentUser!.isAdmin && _currentUser!.canAddProducts);
   }
 
-  Future<void> _reloadProducts() async {
+  void _reloadProducts() {
     setState(() {
       _productsFuture = _service.getProductsByCategory(_categoryId);
     });
+  }
+
+  // ================= حذف منتج =================
+  Future<void> _deleteProduct(Product product) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('تأكيد الحذف'),
+        content: Text('هل تريد حذف "${product.name}" ؟'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('إلغاء'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('حذف'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    await _service.deleteProduct(product.id);
+    _reloadProducts();
   }
 
   @override
@@ -70,9 +95,10 @@ class _CategoryProductsPageState extends State<CategoryProductsPage> {
         centerTitle: true,
       ),
 
-      // ✅ زر إضافة منتج (Admins فقط)
-      floatingActionButton: _canShowAddProductButton
+      // ➕ إضافة منتج (Admins فقط)
+      floatingActionButton: _isAdmin
           ? FloatingActionButton.extended(
+              backgroundColor: Colors.green,
               icon: const Icon(Icons.add),
               label: const Text("إضافة منتج"),
               onPressed: () async {
@@ -94,36 +120,35 @@ class _CategoryProductsPageState extends State<CategoryProductsPage> {
           }
 
           if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text("لا توجد منتجات في هذا القسم"));
+            return const Center(child: Text("لا توجد منتجات"));
           }
 
           final products = snapshot.data!;
 
           return GridView.builder(
             padding: const EdgeInsets.all(14),
-
-            // ✅ Smaller Cards
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            gridDelegate:
+                const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
               mainAxisSpacing: 14,
               crossAxisSpacing: 14,
               childAspectRatio: 0.78,
             ),
-
             itemCount: products.length,
-            itemBuilder: (context, index) {
-              final product = products[index];
+            itemBuilder: (_, i) {
+              final product = products[i];
 
-              return GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => ProductDetailsPage(product: product),
+              return _UnifiedProductCard(
+                product: product,
+                isAdmin: _isAdmin,
+                onDelete: () => _deleteProduct(product),
+                onEdit: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('✏️ تعديل المنتج (قريبًا)'),
                     ),
                   );
                 },
-                child: _CompactProductCard(product: product),
               );
             },
           );
@@ -134,14 +159,20 @@ class _CategoryProductsPageState extends State<CategoryProductsPage> {
 }
 
 //////////////////////////////////////////////////////////////////
-// ✅ Compact Product Card + Small Cart Button
+// 🧱 Card موحّد (User + Admin)
 //////////////////////////////////////////////////////////////////
 
-class _CompactProductCard extends StatelessWidget {
+class _UnifiedProductCard extends StatelessWidget {
   final Product product;
+  final bool isAdmin;
+  final VoidCallback onDelete;
+  final VoidCallback onEdit;
 
-  const _CompactProductCard({
+  const _UnifiedProductCard({
     required this.product,
+    required this.isAdmin,
+    required this.onDelete,
+    required this.onEdit,
   });
 
   @override
@@ -158,17 +189,15 @@ class _CompactProductCard extends StatelessWidget {
           ),
         ],
       ),
-      clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ================= IMAGE + CART BUTTON =================
+          // ================= IMAGE =================
           Stack(
             children: [
               ClipRRect(
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(16),
-                ),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(16)),
                 child: Image.network(
                   product.imageUrl,
                   height: 110,
@@ -177,42 +206,50 @@ class _CompactProductCard extends StatelessWidget {
                 ),
               ),
 
-              // ✅ Small Cart Button (Top Right)
-              Positioned(
-                top: 6,
-                right: 6,
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(50),
-                  onTap: () {
-                    context.read<CartProvider>().addToCart(
-                          product: product,
-                          size: "Default",
-                          quantity: 1,
-                        );
-
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          "🛒 تمت إضافة ${product.name} إلى السلة",
+              // 🛠 Admin Actions
+              if (isAdmin)
+                Positioned(
+                  top: 6,
+                  left: 6,
+                  child: Row(
+                    children: [
+                      // ✏️ Edit
+                      InkWell(
+                        onTap: onEdit,
+                        child: Container(
+                          margin: const EdgeInsets.only(right: 6),
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.withValues(alpha: 0.85),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.edit,
+                            size: 16,
+                            color: Colors.white,
+                          ),
                         ),
-                        duration: const Duration(seconds: 1),
                       ),
-                    );
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.65),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.shopping_cart_outlined,
-                      size: 16,
-                      color: Colors.white,
-                    ),
+
+                      // 🗑 Delete
+                      InkWell(
+                        onTap: onDelete,
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.red.withValues(alpha: 0.85),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.delete,
+                            size: 16,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
             ],
           ),
 
@@ -222,7 +259,6 @@ class _CompactProductCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Product Name
                 Text(
                   product.name,
                   maxLines: 1,
@@ -233,10 +269,7 @@ class _CompactProductCard extends StatelessWidget {
                     color: Colors.white,
                   ),
                 ),
-
                 const SizedBox(height: 4),
-
-                // Price
                 Text(
                   "${product.price.toStringAsFixed(0)} YER",
                   style: const TextStyle(
@@ -245,10 +278,7 @@ class _CompactProductCard extends StatelessWidget {
                     color: Colors.greenAccent,
                   ),
                 ),
-
                 const SizedBox(height: 6),
-
-                // Add Button
                 SizedBox(
                   height: 28,
                   width: double.infinity,
@@ -256,9 +286,6 @@ class _CompactProductCard extends StatelessWidget {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.greenAccent,
                       padding: EdgeInsets.zero,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
                     ),
                     onPressed: () {
                       context.read<CartProvider>().addToCart(
@@ -266,17 +293,9 @@ class _CompactProductCard extends StatelessWidget {
                             size: "Default",
                             quantity: 1,
                           );
-
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content:
-                              Text("🛒 تمت إضافة ${product.name} إلى السلة"),
-                          duration: const Duration(seconds: 1),
-                        ),
-                      );
                     },
                     child: const Text(
-                      "إضافة",
+                      "إضافة للسلة",
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,

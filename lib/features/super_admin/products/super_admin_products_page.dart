@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:tactical_military_store/core/services/supabase_service.dart';
 import 'package:tactical_military_store/models/product.dart';
+import 'package:tactical_military_store/models/category.dart';
 
 import 'package:tactical_military_store/features/super_admin/products/create_product_dialog.dart';
 
@@ -53,24 +54,61 @@ class _SuperAdminProductsPageState
 
     await SupabaseService().deleteProduct(product.id);
 
+    if (!mounted) return;
     _loadProducts();
     setState(() {});
   }
 
   // ================= إضافة منتج =================
   Future<void> _addProduct() async {
+    final categoryId = await _selectCategoryDialog();
+    if (categoryId == null) return;
+
+    if (!mounted) return;
+
     final result = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const CreateProductDialog(
-        categoryId: 1, // ⚠️ مؤقتًا – سنربطه باختيار القسم لاحقًا
+      builder: (_) => CreateProductDialog(
+        categoryId: categoryId,
       ),
     );
 
-    if (result == true) {
+    if (result == true && mounted) {
       _loadProducts();
       setState(() {});
     }
+  }
+
+  // ================= Dialog اختيار القسم =================
+  Future<int?> _selectCategoryDialog() async {
+    final categories = await SupabaseService().getCategories();
+
+    if (!mounted) return null;
+
+    return showDialog<int>(
+      context: context,
+      builder: (_) => SimpleDialog(
+        title: const Text('اختر القسم'),
+        children: categories.map((Category c) {
+          return SimpleDialogOption(
+            onPressed: () {
+              Navigator.pop(context, int.parse(c.id));
+            },
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 16,
+                  backgroundImage: NetworkImage(c.imageUrl),
+                ),
+                const SizedBox(width: 12),
+                Text(c.name),
+              ],
+            ),
+          );
+        }).toList(),
+      ),
+    );
   }
 
   // ================= UI =================
@@ -148,29 +186,10 @@ class _SuperAdminProductsPageState
                     '${p.price.toStringAsFixed(0)} YER',
                     style: const TextStyle(color: Colors.green),
                   ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        tooltip: 'تعديل',
-                        icon:
-                            const Icon(Icons.edit, color: Colors.blue),
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content:
-                                  Text('✏️ تعديل المنتج قيد التنفيذ'),
-                            ),
-                          );
-                        },
-                      ),
-                      IconButton(
-                        tooltip: 'حذف',
-                        icon:
-                            const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () => _deleteProduct(p),
-                      ),
-                    ],
+                  trailing: IconButton(
+                    tooltip: 'حذف',
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    onPressed: () => _deleteProduct(p),
                   ),
                 ),
               );

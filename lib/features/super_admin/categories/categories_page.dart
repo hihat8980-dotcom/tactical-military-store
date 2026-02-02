@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:tactical_military_store/core/services/supabase_service.dart';
 import 'package:tactical_military_store/models/category.dart';
 
-// ✅ import صريح بالمسار الكامل
-import 'package:tactical_military_store/features/super_admin/categories/create_category_dialog.dart';
-import 'package:tactical_military_store/features/super_admin/categories/edit_category_dialog.dart';
+import 'create_category_dialog.dart';
+import 'edit_category_dialog.dart';
 
 class CategoriesPage extends StatefulWidget {
   const CategoriesPage({super.key});
@@ -27,6 +26,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
     _future = SupabaseService().getCategories();
   }
 
+  // ================= 🗑 حذف قسم =================
   Future<void> _deleteCategory(Category category) async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -47,18 +47,24 @@ class _CategoriesPageState extends State<CategoriesPage> {
       ),
     );
 
-    if (confirm == true) {
-      final parsedId = int.tryParse(category.id);
-      if (parsedId == null) return;
+    if (confirm != true) return;
 
-      // ✅ التصحيح هنا
-      await SupabaseService().deleteCategory(parsedId);
+    // ✅ UUID → String (بدون int.parse)
+    await SupabaseService().deleteCategory(category.id);
 
-      _hasChanges = true;
-      setState(_reload);
-    }
+    _hasChanges = true;
+    setState(_reload);
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('✅ تم حذف القسم بنجاح'),
+        backgroundColor: Colors.green,
+      ),
+    );
   }
 
+  // ================= ✏️ تعديل قسم =================
   Future<void> _editCategory(Category category) async {
     final result = await showDialog<bool>(
       context: context,
@@ -125,6 +131,8 @@ class _CategoriesPageState extends State<CategoriesPage> {
                           radius: 45,
                           backgroundImage: NetworkImage(c.imageUrl),
                         ),
+
+                        // ✏️ Edit
                         Positioned(
                           top: -6,
                           left: -6,
@@ -139,6 +147,8 @@ class _CategoriesPageState extends State<CategoriesPage> {
                             ),
                           ),
                         ),
+
+                        // 🗑 Delete
                         Positioned(
                           top: -6,
                           right: -6,
@@ -167,7 +177,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
           onPressed: () async {
             final result = await showDialog<bool>(
               context: context,
-              builder: (_) => const CreateCategoryDialog(), // ✅ الآن صحيح
+              builder: (_) => const CreateCategoryDialog(),
             );
 
             if (result == true) {
