@@ -5,18 +5,17 @@
 # ================================
 
 [build]
-  command = "flutter build web --release"
+  command = "bash scripts/netlify_build_flutter.sh"
   publish = "build/web"
 
 # ================================
-# Environment Settings
+# Netlify Functions
 # ================================
-[build.environment]
-  FLUTTER_VERSION = "stable"
+[functions]
+  directory = "netlify/functions"
 
 # ================================
-# Disable Cache (Important)
-# Forces browsers to always load latest version
+# Headers - Disable Cache
 # ================================
 [[headers]]
   for = "/*"
