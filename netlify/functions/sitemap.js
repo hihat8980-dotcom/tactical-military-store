@@ -1,5 +1,10 @@
 const { createClient } = require("@supabase/supabase-js");
 
+/* ===============================
+   Tactical 729 Dynamic Sitemap
+   Generated Automatically
+   =============================== */
+
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -7,24 +12,30 @@ const supabase = createClient(
 
 exports.handler = async function () {
   try {
-    // ✅ جلب الأقسام
+    /* ===============================
+       1) Fetch Categories
+       =============================== */
     const { data: categories, error: catError } = await supabase
       .from("categories")
-      .select("slug");
+      .select("slug, updated_at");
 
     if (catError) throw catError;
 
-    // ✅ جلب المنتجات
+    /* ===============================
+       2) Fetch Products
+       =============================== */
     const { data: products, error: prodError } = await supabase
       .from("products")
       .select("slug, updated_at");
 
     if (prodError) throw prodError;
 
-    // ✅ روابط Sitemap
+    /* ===============================
+       3) Sitemap XML Start
+       =============================== */
     let urls = "";
 
-    // الصفحة الرئيسية
+    // ✅ Homepage
     urls += `
   <url>
     <loc>https://tactical729.com/</loc>
@@ -32,19 +43,45 @@ exports.handler = async function () {
     <priority>1.0</priority>
   </url>`;
 
-    // صفحات الأقسام
-    categories?.forEach((cat) => {
-      if (!cat.slug) return;
+    // ✅ Main Pages
+    const mainPages = [
+      { path: "#/categories", priority: 0.9 },
+      { path: "#/products", priority: 0.9 },
+      { path: "#/cart", priority: 0.7 },
+      { path: "#/orders", priority: 0.6 },
+    ];
 
+    mainPages.forEach((page) => {
       urls += `
   <url>
-    <loc>https://tactical729.com/category/${cat.slug}</loc>
+    <loc>https://tactical729.com/${page.path}</loc>
     <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
+    <priority>${page.priority}</priority>
   </url>`;
     });
 
-    // صفحات المنتجات
+    /* ===============================
+       4) Category Pages
+       =============================== */
+    categories?.forEach((cat) => {
+      if (!cat.slug) return;
+
+      const lastmod = cat.updated_at
+        ? cat.updated_at.split("T")[0]
+        : new Date().toISOString().split("T")[0];
+
+      urls += `
+  <url>
+    <loc>https://tactical729.com/#/category/${cat.slug}</loc>
+    <lastmod>${lastmod}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>`;
+    });
+
+    /* ===============================
+       5) Product Pages (Most Important)
+       =============================== */
     products?.forEach((p) => {
       if (!p.slug) return;
 
@@ -54,14 +91,16 @@ exports.handler = async function () {
 
       urls += `
   <url>
-    <loc>https://tactical729.com/product/${p.slug}</loc>
+    <loc>https://tactical729.com/#/product/${p.slug}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.95</priority>
   </url>`;
     });
 
-    // ✅ إخراج Sitemap كامل
+    /* ===============================
+       6) Final XML Output
+       =============================== */
     const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls}
@@ -71,6 +110,7 @@ ${urls}
       statusCode: 200,
       headers: {
         "Content-Type": "application/xml",
+        "Cache-Control": "no-cache",
       },
       body: sitemap,
     };
