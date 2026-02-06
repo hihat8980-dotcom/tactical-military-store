@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:tactical_military_store/core/services/supabase_service.dart';
+
 import 'package:tactical_military_store/models/category.dart';
 import 'package:tactical_military_store/models/product.dart';
 
@@ -11,7 +12,7 @@ import 'widgets/category_tabs.dart';
 import 'widgets/products_grid.dart';
 import 'widgets/store_filters_sheet.dart';
 
-/// ✅ NEW: Banner Offers Widget
+/// ✅ عروض البانر (Amazon Slider)
 import 'widgets/store_offers_banner.dart';
 
 class StoreHomePage extends StatefulWidget {
@@ -32,21 +33,26 @@ class _StoreHomePageState extends State<StoreHomePage> {
 
   int _notificationsCount = 0;
 
-  // ✅ Sort Type
+  /// ✅ Sort Type
   ProductSortType _sortType = ProductSortType.newest;
 
   @override
   void initState() {
     super.initState();
 
+    /// تحميل الأقسام
     _categoriesFuture = _service.getCategories();
+
+    /// تحميل المنتجات
     _productsFuture = _service.products.getAllProducts();
 
+    /// تحميل الإشعارات
     _loadNotificationsCount();
   }
 
   Future<void> _loadNotificationsCount() async {
     final count = await _service.getNotificationsCount();
+
     if (!mounted) return;
 
     setState(() => _notificationsCount = count);
@@ -58,12 +64,12 @@ class _StoreHomePageState extends State<StoreHomePage> {
   List<Product> _filterProducts(List<Product> products) {
     var list = products;
 
-    // Category Filter
+    /// فلتر القسم
     if (_selectedCategoryId != null) {
       list = list.where((p) => p.categoryId == _selectedCategoryId).toList();
     }
 
-    // Search Filter
+    /// فلتر البحث
     if (_searchText.isNotEmpty) {
       list = list
           .where(
@@ -72,12 +78,12 @@ class _StoreHomePageState extends State<StoreHomePage> {
           .toList();
     }
 
-    // Sorting
+    /// Sorting
     if (_sortType == ProductSortType.priceLow) {
       list.sort((a, b) => a.price.compareTo(b.price));
     } else if (_sortType == ProductSortType.priceHigh) {
       list.sort((a, b) => b.price.compareTo(a.price));
-    } else if (_sortType == ProductSortType.newest) {
+    } else {
       list.sort((a, b) => b.id.compareTo(a.id));
     }
 
@@ -96,22 +102,22 @@ class _StoreHomePageState extends State<StoreHomePage> {
           padding: const EdgeInsets.all(16),
           children: [
             // =====================================================
-            // 🔍 Search Bar + Favorite + Notifications + Filter
+            // 🔍 Search Bar + Notifications + Filter
             // =====================================================
             StoreSearchBar(
               notificationsCount: _notificationsCount,
 
-              // Search
+              /// Search
               onChanged: (value) {
                 setState(() => _searchText = value);
               },
 
-              // Notifications
+              /// Notifications
               onNotificationsTap: () {
                 Navigator.pushNamed(context, "/notifications");
               },
 
-              // Favorites Tap
+              /// Favorites
               onFavoritesTap: () {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
@@ -121,7 +127,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
                 );
               },
 
-              // Filter Tap
+              /// Filter
               onFilterTap: () {
                 showModalBottomSheet(
                   context: context,
@@ -150,7 +156,13 @@ class _StoreHomePageState extends State<StoreHomePage> {
             FutureBuilder<List<Category>>(
               future: _categoriesFuture,
               builder: (context, snapshot) {
-                if (!snapshot.hasData) return const SizedBox();
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const SizedBox();
+                }
+
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const SizedBox();
+                }
 
                 return CategoryTabs(
                   categories: snapshot.data!,
@@ -165,7 +177,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
             const SizedBox(height: 18),
 
             // =====================================================
-            // 🎁 Banner Offers From Supabase (Dynamic)
+            // 🎁 Banner Offers Slider (Dynamic Amazon Style)
             // =====================================================
             const StoreOffersBanner(),
 
@@ -177,21 +189,28 @@ class _StoreHomePageState extends State<StoreHomePage> {
             FutureBuilder<List<Product>>(
               future: _productsFuture,
               builder: (context, snapshot) {
+                /// Loading
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Padding(
+                    padding: EdgeInsets.all(30),
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                }
+
+                /// Error
                 if (!snapshot.hasData) {
                   return const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(30),
-                      child: CircularProgressIndicator(),
-                    ),
+                    child: Text("❌ خطأ أثناء تحميل المنتجات"),
                   );
                 }
 
                 final products = _filterProducts(snapshot.data!);
 
+                /// No Products
                 if (products.isEmpty) {
-                  return const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(30),
+                  return const Padding(
+                    padding: EdgeInsets.all(30),
+                    child: Center(
                       child: Text(
                         "🚫 لا توجد منتجات مطابقة",
                         style: TextStyle(
@@ -203,14 +222,14 @@ class _StoreHomePageState extends State<StoreHomePage> {
                   );
                 }
 
+                /// Products Grid
                 return ProductsGrid(
                   products: products,
                   onTap: (product) {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) =>
-                            ProductDetailsPage(product: product),
+                        builder: (_) => ProductDetailsPage(product: product),
                       ),
                     );
                   },

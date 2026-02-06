@@ -23,7 +23,9 @@ import 'package:tactical_military_store/core/services/supabase/supabase_offer_se
 
 class SupabaseService {
   static final SupabaseService _instance = SupabaseService._internal();
+
   factory SupabaseService() => _instance;
+
   SupabaseService._internal();
 
   // =====================================================
@@ -307,6 +309,8 @@ class SupabaseService {
 
   Future<StoreOffer?> getActiveOffer() => offers.getActiveOffer();
 
+  Future<List<StoreOffer>> getActiveOffers() => offers.getActiveOffers();
+
   Future<List<StoreOffer>> getAllOffers() => offers.getAllOffers();
 
   Future<void> createOffer({
@@ -317,8 +321,10 @@ class SupabaseService {
 
   Future<void> disableOffer(int id) => offers.disableOffer(id);
 
+  Future<void> deleteOffer(StoreOffer offer) => offers.deleteOffer(offer);
+
   // =====================================================
-  // ✅ Upload Offer Image To Supabase Storage (FINAL FIX ✅)
+  // ✅ Upload Offer Image To Supabase Storage
   // =====================================================
 
   Future<String> uploadOfferImage({
@@ -326,7 +332,6 @@ class SupabaseService {
     required Uint8List bytes,
   }) async {
     const bucketName = "offers";
-
     final path = "banners/$fileName";
 
     await Supabase.instance.client.storage.from(bucketName).uploadBinary(

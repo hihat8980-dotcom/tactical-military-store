@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:tactical_military_store/core/theme/military_theme.dart';
 
-// ✅ Offers Page Import
+// ✅ Offers Page
 import 'package:tactical_military_store/features/super_admin/offers/offers_page.dart';
+
+// ✅ Banner Settings Page
+import 'package:tactical_military_store/features/super_admin/banner/banner_settings_page.dart';
 
 class SuperAdminDiscountsPage extends StatelessWidget {
   const SuperAdminDiscountsPage({super.key});
@@ -11,7 +14,6 @@ class SuperAdminDiscountsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: MilitaryTheme.sand,
-
       appBar: AppBar(
         centerTitle: true,
         title: const Text(
@@ -22,7 +24,6 @@ class SuperAdminDiscountsPage extends StatelessWidget {
           ),
         ),
       ),
-
       body: Padding(
         padding: const EdgeInsets.all(18),
         child: Column(
@@ -41,7 +42,8 @@ class SuperAdminDiscountsPage extends StatelessWidget {
                 '• خصومات على المنتجات\n'
                 '• خصومات على الأقسام\n'
                 '• كوبونات الخصم\n'
-                '• عروض البانر الرئيسية',
+                '• عروض البانر الرئيسية\n'
+                '• إعدادات Slider البانر',
                 style: TextStyle(
                   color: Colors.white70,
                   height: 1.5,
@@ -66,65 +68,57 @@ class SuperAdminDiscountsPage extends StatelessWidget {
                     icon: Icons.percent_rounded,
                     title: 'خصم عام',
                     subtitle: 'على كل المتجر',
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("🚧 قريبًا: خصم عام"),
-                        ),
-                      );
-                    },
+                    onTap: () {},
                   ),
 
                   _DiscountActionCard(
                     icon: Icons.inventory_2_rounded,
                     title: 'خصم منتج',
                     subtitle: 'منتج محدد',
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("🚧 قريبًا: خصم منتج"),
-                        ),
-                      );
-                    },
+                    onTap: () {},
                   ),
 
                   _DiscountActionCard(
                     icon: Icons.category_rounded,
                     title: 'خصم قسم',
                     subtitle: 'قسم كامل',
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("🚧 قريبًا: خصم قسم"),
-                        ),
-                      );
-                    },
+                    onTap: () {},
                   ),
 
                   _DiscountActionCard(
                     icon: Icons.confirmation_number_rounded,
                     title: 'كوبونات',
                     subtitle: 'Codes',
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("🚧 قريبًا: كوبونات"),
-                        ),
-                      );
-                    },
+                    onTap: () {},
                   ),
 
-                  // ✅ Banner Offers Card (Full Professional)
+                  // ================= OFFERS =================
                   _DiscountActionCard(
                     icon: Icons.campaign_rounded,
                     title: "عروض البانر",
-                    subtitle: "رفع صورة الخصم الرئيسية",
+                    subtitle: "رفع صور العروض",
                     isSpecial: true,
                     onTap: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (_) => const OffersPage(),
+                        ),
+                      );
+                    },
+                  ),
+
+                  // ================= SETTINGS =================
+                  _DiscountActionCard(
+                    icon: Icons.settings_rounded,
+                    title: "إعدادات البانر",
+                    subtitle: "Banner Slider Settings",
+                    isSpecial: true,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const BannerSettingsPage(),
                         ),
                       );
                     },
@@ -140,15 +134,13 @@ class SuperAdminDiscountsPage extends StatelessWidget {
 }
 
 // =====================================================
-// 🧱 Discount Action Card Widget
+// CARD
 // =====================================================
 class _DiscountActionCard extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
-
-  /// ✅ Special Card Highlight
   final bool isSpecial;
 
   const _DiscountActionCard({
@@ -177,13 +169,6 @@ class _DiscountActionCard extends StatelessWidget {
                 : MilitaryTheme.border,
             width: isSpecial ? 1.4 : 1,
           ),
-          boxShadow: [
-            BoxShadow(
-              blurRadius: 8,
-              offset: const Offset(0, 5),
-              color: Colors.black.withValues(alpha: 0.15),
-            ),
-          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -193,30 +178,22 @@ class _DiscountActionCard extends StatelessWidget {
               backgroundColor: MilitaryTheme.sandDark,
               child: Icon(
                 icon,
-                color: isSpecial ? Colors.orangeAccent : MilitaryTheme.accent,
-                size: 26,
+                color: isSpecial
+                    ? Colors.orangeAccent
+                    : MilitaryTheme.accent,
               ),
             ),
-
             const Spacer(),
-
             Text(
               title,
               style: const TextStyle(
-                fontSize: 15,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
               ),
             ),
-
-            const SizedBox(height: 6),
-
             Text(
               subtitle,
-              style: const TextStyle(
-                fontSize: 12,
-                color: Colors.white60,
-              ),
+              style: const TextStyle(color: Colors.white60),
             ),
           ],
         ),

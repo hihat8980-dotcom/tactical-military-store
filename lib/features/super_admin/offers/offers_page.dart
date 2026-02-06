@@ -18,8 +18,23 @@ class _OffersPageState extends State<OffersPage> {
   final titleController = TextEditingController();
 
   Uint8List? selectedImageBytes;
-
   bool isUploading = false;
+
+  // ✅ Future محفوظ لتجنب التحميل المتكرر
+  late Future<List<StoreOffer>> _offersFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _offersFuture = service.getAllOffers();
+  }
+
+  // ✅ Refresh Offers
+  void refreshOffers() {
+    setState(() {
+      _offersFuture = service.getAllOffers();
+    });
+  }
 
   // =====================================================
   // ✅ Pick Image From Device
@@ -51,16 +66,13 @@ class _OffersPageState extends State<OffersPage> {
     setState(() => isUploading = true);
 
     try {
-      final fileName =
-          "offer_${DateTime.now().millisecondsSinceEpoch}.png";
+      final fileName = "offer_${DateTime.now().millisecondsSinceEpoch}.png";
 
-      // ✅ Upload Image To Supabase Storage
       final imageUrl = await service.uploadOfferImage(
         fileName: fileName,
         bytes: selectedImageBytes!,
       );
 
-      // ✅ Insert Offer Into Database
       await service.createOffer(
         title: titleController.text,
         imageUrl: imageUrl,
@@ -75,7 +87,8 @@ class _OffersPageState extends State<OffersPage> {
         const SnackBar(content: Text("✅ تم رفع العرض بنجاح")),
       );
 
-      setState(() {});
+      // ✅ Refresh List بعد الإضافة
+      refreshOffers();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("❌ خطأ أثناء الرفع: $e")),
@@ -90,9 +103,20 @@ class _OffersPageState extends State<OffersPage> {
   // =====================================================
   Future<void> disableOffer(int id) async {
     await service.disableOffer(id);
-    setState(() {});
+    refreshOffers();
   }
 
+  // =====================================================
+  // ✅ Delete Offer
+  // =====================================================
+  Future<void> deleteOffer(StoreOffer offer) async {
+    await service.deleteOffer(offer);
+    refreshOffers();
+  }
+
+  // =====================================================
+  // ✅ UI
+  // =====================================================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -144,17 +168,13 @@ class _OffersPageState extends State<OffersPage> {
 
                     const SizedBox(height: 12),
 
-                    // ✅ Upload Button With Loading
                     ElevatedButton.icon(
                       onPressed: isUploading ? null : addOffer,
                       icon: isUploading
                           ? const SizedBox(
                               width: 18,
                               height: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
+                              child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : const Icon(Icons.cloud_upload),
                       label: Text(
@@ -171,21 +191,22 @@ class _OffersPageState extends State<OffersPage> {
             // ================= OFFERS LIST =================
             Expanded(
               child: FutureBuilder<List<StoreOffer>>(
-                future: service.getAllOffers(),
+                future: _offersFuture,
                 builder: (context, snapshot) {
-                  if (!snapshot.hasData) {
+                  if (snapshot.connectionState ==
+                      ConnectionState.waiting) {
                     return const Center(
                       child: CircularProgressIndicator(),
                     );
                   }
 
-                  final offers = snapshot.data!;
-
-                  if (offers.isEmpty) {
+                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
                     return const Center(
                       child: Text("لا توجد عروض حتى الآن"),
                     );
                   }
+
+                  final offers = snapshot.data!;
 
                   return ListView.builder(
                     itemCount: offers.length,
@@ -201,16 +222,21 @@ class _OffersPageState extends State<OffersPage> {
                           subtitle: Text(
                             offer.isActive ? "✅ مفعل" : "❌ غير مفعل",
                           ),
-                          trailing: offer.isActive
-                              ? IconButton(
-                                  icon: const Icon(
-                                    Icons.cancel,
-                                    color: Colors.red,
-                                  ),
-                                  onPressed: () =>
-                                      disableOffer(offer.id),
-                                )
-                              : null,
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.cancel,
+                                    color: Colors.orange),
+                                onPressed: () => disableOffer(offer.id),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete,
+                                    color: Colors.red),
+                                onPressed: () => deleteOffer(offer),
+                              ),
+                            ],
+                          ),
                         ),
                       );
                     },

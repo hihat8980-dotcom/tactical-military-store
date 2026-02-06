@@ -26,12 +26,13 @@ class _UserShellState extends State<UserShell> {
   // =====================================================
   // ✅ Pages (ALL OPEN)
   // =====================================================
-  final List<Widget> _pages = const [
-    StoreHomePage(),   // 0 المتجر
-    CartPage(),        // 1 السلة
-    UserOrdersPage(),  // 2 الطلبات
-    ProfilePage(),     // 3 الحساب
-    SettingsPage(),    // 4 الإعدادات
+  /// ❌ لا تستخدم const list هنا لأن بعض الصفحات ليست const بالكامل
+  late final List<Widget> _pages = [
+    const StoreHomePage(), // 0 المتجر
+    const CartPage(), // 1 السلة
+    const UserOrdersPage(), // 2 الطلبات
+    const ProfilePage(), // 3 الحساب
+    const SettingsPage(), // 4 الإعدادات
   ];
 
   // =====================================================
@@ -42,7 +43,7 @@ class _UserShellState extends State<UserShell> {
     return Scaffold(
       backgroundColor: MilitaryTheme.sand,
 
-      // ❌ لا AppBar
+      // ❌ لا AppBar (واجهة مفتوحة)
       body: _pages[_index],
 
       // ================= Bottom Navigation =================
@@ -50,6 +51,12 @@ class _UserShellState extends State<UserShell> {
         currentIndex: _index,
         onTap: (i) => setState(() => _index = i),
         type: BottomNavigationBarType.fixed,
+
+        // ✅ تصميم ألوان المتجر
+        selectedItemColor: MilitaryTheme.accent,
+        unselectedItemColor: Colors.white60,
+        backgroundColor: MilitaryTheme.card,
+
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.storefront),
