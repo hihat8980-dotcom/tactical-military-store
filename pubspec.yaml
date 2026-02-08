@@ -41,42 +41,45 @@ dependencies:
   # ===== Icons =====
   cupertino_icons: ^1.0.8
 
-  # ⭐ Social Icons (WhatsApp / Instagram / Facebook)
+  # ⭐ Social Icons
   font_awesome_flutter: ^10.7.0
 
   # ============================================================
-  # ✅ Supabase Backend (Main Database + Auth)
+  # ✅ Supabase Backend
   # ============================================================
   supabase_flutter: ^2.3.4
+
+  # ===== HTTP (Proxy support for Flutter Web) =====
+  http: ^1.2.0
 
   # ===== Logger =====
   logger: ^2.4.0
 
-  # ===== Pick Images (Profile Avatar + Admin Upload) =====
+  # ===== Pick Images =====
   image_picker: ^1.1.2
 
-  # ===== File Upload Support (Web + Mobile) =====
+  # ===== File Upload Support =====
   file_picker: ^8.0.6
 
-  # ===== Animations (Professional UI) =====
+  # ===== Animations =====
   animations: ^2.0.11
 
-  # ===== Shimmer Loading Effect =====
+  # ===== Shimmer =====
   shimmer: ^3.0.0
 
-  # ===== Responsive UI (Mobile + Web) =====
+  # ===== Responsive UI =====
   flutter_screenutil: ^5.9.3
 
-  # ===== Secure Storage (Tokens + Sensitive Data) =====
+  # ===== Secure Storage =====
   flutter_secure_storage: ^9.2.2
 
   # ===== Internet Connection Checker =====
   connectivity_plus: ^6.0.5
 
-  # ===== Payment Ready (Future Checkout) =====
+  # ===== Payment Ready =====
   flutter_stripe: ^11.0.0
 
-  # ===== WebView (For Policy Pages / Checkout) =====
+  # ===== WebView =====
   webview_flutter: ^4.10.0
 
 
@@ -90,10 +93,7 @@ dev_dependencies:
 
   flutter_lints: ^6.0.0
 
-  # ===== App Icon Generator =====
   flutter_launcher_icons: ^0.13.1
-
-  # ===== Splash Screen Generator =====
   flutter_native_splash: ^2.4.1
 
 
@@ -105,7 +105,6 @@ flutter:
   uses-material-design: true
   generate: true
 
-  # ===== Assets =====
   assets:
     - assets/icon/
     - assets/images/
@@ -113,7 +112,6 @@ flutter:
     - assets/logo1.jpg
     - assets/logo2.jpg
 
-  # ===== Fonts =====
   fonts:
     - family: Rajdhani
       fonts:
