@@ -1,6 +1,3 @@
-import 'dart:convert';
-import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tactical_military_store/models/store_offer.dart';
 
@@ -8,34 +5,9 @@ class SupabaseOfferService {
   final SupabaseClient _client = Supabase.instance.client;
 
   // =====================================================
-  // 🌐 Detect Web
-  // =====================================================
-  bool get _isWeb => kIsWeb;
-
-  // =====================================================
-  // 🌐 Proxy GET (للويب فقط)
-  // =====================================================
-  Future<List<dynamic>> _proxyGet(String table) async {
-    final response = await http.get(Uri.parse("/api/$table"));
-
-    if (response.statusCode != 200) {
-      throw Exception("Proxy error");
-    }
-
-    return jsonDecode(response.body);
-  }
-
-  // =====================================================
   // ✅ Get Single Active Offer (OLD – لا نكسره)
   // =====================================================
   Future<StoreOffer?> getActiveOffer() async {
-    if (_isWeb) {
-      final data = await _proxyGet("offers");
-
-      if (data.isEmpty) return null;
-      return StoreOffer.fromMap(data.first);
-    }
-
     final data = await _client
         .from("offers")
         .select()
@@ -51,17 +23,12 @@ class SupabaseOfferService {
   // ✅ Get Multiple Active Offers (Slider + Time + Order)
   // =====================================================
   Future<List<StoreOffer>> getActiveOffers() async {
-    if (_isWeb) {
-      final data = await _proxyGet("offers");
-      return List<Map<String, dynamic>>.from(data)
-          .map((e) => StoreOffer.fromMap(e))
-          .toList();
-    }
-
     final data = await _client
         .from("offers")
         .select()
         .eq("is_active", true)
+        .or('start_at.is.null,start_at.lte.now()')
+        .or('end_at.is.null,end_at.gte.now()')
         .order("sort_order", ascending: true)
         .order("created_at", ascending: false);
 
@@ -83,7 +50,7 @@ class SupabaseOfferService {
   }
 
   // =====================================================
-  // ✅ Create Offer
+  // ✅ Create Offer (افتراضيًا Active)
   // =====================================================
   Future<void> createOffer({
     required String title,
@@ -103,7 +70,7 @@ class SupabaseOfferService {
   }
 
   // =====================================================
-  // ✅ Disable Offer
+  // ✅ Disable Offer (Soft Disable)
   // =====================================================
   Future<void> disableOffer(int id) async {
     await _client.from("offers").update({
@@ -112,7 +79,7 @@ class SupabaseOfferService {
   }
 
   // =====================================================
-  // ✅ Update Sort Order
+  // ✅ Update Sort Order (Drag & Drop)
   // =====================================================
   Future<void> updateSortOrder(int id, int order) async {
     await _client.from("offers").update({
@@ -124,15 +91,6 @@ class SupabaseOfferService {
   // ✅ Delete Offer
   // =====================================================
   Future<void> deleteOffer(StoreOffer offer) async {
-    try {
-      final uri = Uri.parse(offer.imageUrl);
-      final fileName = uri.pathSegments.last;
-
-      await _client.storage.from("offers").remove([
-        "banners/$fileName",
-      ]);
-    } catch (_) {}
-
     await _client.from("offers").delete().eq("id", offer.id);
   }
 }
