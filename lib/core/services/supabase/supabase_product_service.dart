@@ -1,10 +1,10 @@
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tactical_military_store/models/product.dart';
 import 'package:tactical_military_store/models/product_image.dart';
 import 'package:tactical_military_store/models/product_variant.dart';
-import 'supabase_client.dart';
 
 class SupabaseProductService {
-  final _supabase = SupabaseClientService.client;
+  final _supabase = Supabase.instance.client;
 
   // =====================================================
   // ✅ CREATE PRODUCT
@@ -34,7 +34,7 @@ class SupabaseProductService {
   }
 
   // =====================================================
-  // ✏️ UPDATE PRODUCT (Super Admin)
+  // ✏️ UPDATE PRODUCT
   // =====================================================
   Future<void> updateProduct({
     required int productId,
@@ -56,7 +56,7 @@ class SupabaseProductService {
   }
 
   // =====================================================
-  // 🗑 DELETE PRODUCT (Product + Images + Variants)
+  // 🗑 DELETE PRODUCT
   // =====================================================
   Future<void> deleteProduct(int productId) async {
     await _supabase
@@ -69,10 +69,7 @@ class SupabaseProductService {
         .delete()
         .eq('product_id', productId);
 
-    await _supabase
-        .from('products')
-        .delete()
-        .eq('id', productId);
+    await _supabase.from('products').delete().eq('id', productId);
   }
 
   // =====================================================
@@ -124,14 +121,11 @@ class SupabaseProductService {
   }
 
   Future<void> deleteProductImage(int imageId) async {
-    await _supabase
-        .from('product_images')
-        .delete()
-        .eq('id', imageId);
+    await _supabase.from('product_images').delete().eq('id', imageId);
   }
 
   // =====================================================
-  // 📏 PRODUCT VARIANTS (اختيارية)
+  // 📏 PRODUCT VARIANTS
   // =====================================================
   Future<void> addProductVariant({
     required int productId,
@@ -156,9 +150,6 @@ class SupabaseProductService {
   }
 
   Future<void> deleteProductVariant(int variantId) async {
-    await _supabase
-        .from('product_variants')
-        .delete()
-        .eq('id', variantId);
+    await _supabase.from('product_variants').delete().eq('id', variantId);
   }
 }
